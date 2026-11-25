@@ -142,9 +142,9 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <ol>
       <li>Say virginica (B) when its prior × likelihood is larger.
         $$\pi_B\,p(x\mid B)\;\gt\;\pi_A\,p(x\mid A)$$</li>
-      <li>Write out the Gaussians and take logs. Both have the same factor \(1/(\sigma\sqrt{2\pi})\) in front, so it drops out.
+      <li>Write out the Gaussians and take logs. The measured spreads differ a little (0.47 and 0.55 cm). LDA assumes they are equal, so both curves use the same \(\sigma\) (0.51 cm here). That is an assumption, not a fact about the flowers. With it, both curves have the same factor \(1/(\sigma\sqrt{2\pi})\) in front, so it drops out.
         $$\log\pi_B-\frac{(x-\mu_B)^2}{2\sigma^2}\;\gt\;\log\pi_A-\frac{(x-\mu_A)^2}{2\sigma^2}$$</li>
-      <li>Expand the squares. Both sides contain \(-x^2/2\sigma^2\), so it cancels. What is left has \(x\) only to the first power.
+      <li>Expand the squares. Both sides contain \(-x^2/2\sigma^2\), so it cancels. What is left has \(x\) only to the first power. With two different spreads, \(\sigma_A\) and \(\sigma_B\), neither the factor in step 2 nor this \(x^2\) term would cancel. That case is QDA, in section 2.
         $$x\,\frac{\mu_B-\mu_A}{\sigma^2}\;-\;\frac{\mu_B^2-\mu_A^2}{2\sigma^2}\;+\;\log\frac{\pi_B}{\pi_A}\;\gt\;0$$</li>
       <li>Solve for \(x\), using \(\mu_B^2-\mu_A^2=(\mu_B-\mu_A)(\mu_B+\mu_A)\).
         $$x\;\gt\;\underbrace{\frac{\mu_A+\mu_B}{2}}_{\text{halfway between the means}}\;-\;\underbrace{\frac{\sigma^2}{\mu_B-\mu_A}\log\frac{\pi_B}{\pi_A}}_{\text{shift from the priors}}$$</li>
