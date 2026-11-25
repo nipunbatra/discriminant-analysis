@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LDA and QDA from the ground up</title>
-<meta name="description" content="A slow, interactive introduction to linear and quadratic discriminant analysis on real iris flowers, and how they relate to Fisher's projection, PCA, logistic regression and Bayesian inference.">
+<title>LDA from the ground up</title>
+<meta name="description" content="A slow, interactive introduction to linear discriminant analysis on real iris flowers, and how it relates to Fisher's projection, PCA and logistic regression.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
@@ -46,6 +46,10 @@ p{margin:0 0 16px}
 .who .who-name{font-weight:650;color:var(--hot);margin-bottom:4px}
 .who .who-credit{font-size:12px;color:var(--soft);margin:0}
 @media(max-width:520px){.who{gap:12px;padding:12px}.who img{width:84px}}
+.rule{background:var(--panel);border:2px solid var(--ink);border-radius:12px;padding:14px 20px 8px;margin:22px 0;max-width:38em}
+.rule p{margin:0 0 8px}
+.rule .rule-name{font:650 13px var(--sans);color:var(--hot);margin-bottom:6px}
+.note{font-family:var(--sans);font-size:15px;line-height:1.5;color:var(--soft);max-width:44em}
 .try{font-family:var(--sans);font-size:.86rem;background:#FFF6DA;border-radius:8px;padding:9px 14px;max-width:44em;margin:0 0 16px}
 .try b{font-weight:650}
 .sofar{border-left:4px solid var(--ink);padding:2px 0 2px 16px;margin:26px 0 0;max-width:38em}
@@ -106,21 +110,21 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
 <main>
 
 <header class="top">
-  <h1>LDA and QDA from the ground up</h1>
+  <h1>LDA from the ground up</h1>
   <p class="lede">These are 100 real iris flowers of two species. A new flower turns up. Which species is it? Drag the black flower around and see what the classifier says.</p>
   <figure class="fig" id="w-hero">
     <canvas data-aspect="0.5" aria-label="Petal length and width of 100 iris flowers with a draggable new flower"></canvas>
     <div class="legend"><span><i class="dot" style="background:var(--a)"></i>versicolor</span><span><i class="dot" style="background:var(--b)"></i>virginica</span></div>
     <div class="readout"></div>
   </figure>
-  <p>That line is <b>linear discriminant analysis</b> (LDA). This page builds it slowly: first with one measurement, then with two, then with a curved boundary (QDA). After that it connects LDA to PCA, logistic regression and Bayesian thinking.</p>
+  <p>That line is <b>linear discriminant analysis</b> (LDA). This page builds it slowly, first with one measurement and then with two. After that it shows how LDA relates to two methods you may already know, PCA and logistic regression, and ends with a short Bayesian note.</p>
   <p>The data is the iris set that Ronald Fisher used in 1936 when he invented the method: 50 flowers each of three species, with four measurements per flower.</p>
   <h3>The flowers and what was measured</h3>
   <p>An iris has three large outer parts called <b>sepals</b> and three smaller inner parts called <b>petals</b>. The botanist Edgar Anderson measured the length and the width of one sepal and one petal on every flower. Those are the four numbers.</p>
   <figure class="fig" id="w-iris">
     <div class="iris-parts"></div>
     <div class="iris-row"></div>
-    <figcaption>Top: an average versicolor with the four measurements marked. Below: schematic flowers, drawn to one scale from the average of the 50 real flowers of each species. Setosa is easy to spot: its petals are tiny. Versicolor and virginica differ only in size, and they overlap, which is why most of this page is about those two. Real irises of all three species are violet-blue. The colour of each name is the colour that species has in the charts.</figcaption>
+    <figcaption>Top: an average versicolor with the four measurements marked. Below: schematic flowers, drawn to one scale from the average of the 50 real flowers of each species. Real irises of all three species are violet-blue. The colour of each name is the colour that species has in the charts.</figcaption>
   </figure>
 </header>
 
@@ -138,13 +142,19 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   <p>The best you can do is 7 mistakes out of 100, with the cut anywhere from about 4.75 to 4.9 cm. We found that by trial and error. The rest of this section finds the same cut by reasoning, because reasoning still works when there are fifty measurements and no picture to look at.</p>
 
   <h3>Summarise each species with a bell curve</h3>
-  <p>Describe each species by two numbers: its average petal length and how much the lengths spread around the average (the standard deviation). Those two numbers define a bell curve, a Gaussian.</p>
+  <p>Describe each species by two numbers. Its <b>centre</b> is the average petal length. Its <b>spread</b> is how far the lengths typically fall from that average (the standard deviation). A centre and a spread define a bell curve, a Gaussian.</p>
+  <p>The two species have different centres, and that difference is what we will use. Their spreads, 0.47 and 0.55 cm, are nearly the same. LDA makes them exactly the same.</p>
+  <div class="rule">
+    <p class="rule-name">The one rule of LDA</p>
+    <p>Every class gets <b>its own centre</b>. All classes share <b>one spread</b>.</p>
+    <p>The shared spread is made in two moves, and they are the same two moves everywhere on this page. First measure each class’s own spread. Then average them. (The average is taken on the variances, which are the spreads squared.)</p>
+  </div>
   <figure class="fig" id="w-bell">
-    <canvas data-aspect="0.42" aria-label="The same petal lengths with a fitted bell curve for each species"></canvas>
+    <canvas data-aspect="0.46" style="min-height:310px" aria-label="Petal lengths with a bell curve for each species, and bars for each species' own spread and the shared spread"></canvas>
     <div class="readout"></div>
-    <figcaption>The curves are drawn at the height that matches the dots: the number of flowers expected at each length.</figcaption>
+    <figcaption>Each species has two bars. “Own” reaches one of its own spreads either side of its centre. “Shared” reaches one shared spread. Both bell curves are drawn with the shared spread, and they still fit the dots well.</figcaption>
   </figure>
-  <p>The two spreads, 0.47 and 0.55 cm, are close. For now treat them as equal and use their average, 0.51 cm, for both species. This choice, one shared spread, is the assumption that defines LDA. Section 2 drops it.</p>
+  <p>From here on, a class’s own spread is only an ingredient. Every curve, every formula and every figure below uses the shared one.</p>
 
   <h3>A new flower arrives</h3>
   <p>Now a new flower has petal length \(x\). The height of each bell curve at \(x\) says how typical that length is for each species. This is the <b>likelihood</b> \(p(x\mid\text{species})\). <b>Bayes’ rule</b> turns the two heights into a probability for each species:</p>
@@ -160,22 +170,27 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
 
   <h3>Where exactly do the curves cross?</h3>
   <div class="derive">
-    <h4>Derivation: the cut for one measurement and a shared spread σ</h4>
+    <h4>Derivation: the cut for one measurement</h4>
     <ol>
       <li>Say virginica (B) when its prior × likelihood is larger.
         $$\pi_B\,p(x\mid B)\;\gt\;\pi_A\,p(x\mid A)$$</li>
-      <li>Write out the Gaussians and take logs. The measured spreads differ a little (0.47 and 0.55 cm). LDA assumes they are equal, so both curves use the same \(\sigma\) (0.51 cm here). That is an assumption, not a fact about the flowers. With it, both curves have the same factor \(1/(\sigma\sqrt{2\pi})\) in front, so it drops out.
+      <li>Write out the two bell curves and take logs. Both use the shared spread \(\sigma\) (0.51 cm), so both have the same factor \(1/(\sigma\sqrt{2\pi})\) in front, and it drops out.
         $$\log\pi_B-\frac{(x-\mu_B)^2}{2\sigma^2}\;\gt\;\log\pi_A-\frac{(x-\mu_A)^2}{2\sigma^2}$$</li>
-      <li>Expand the squares. Both sides contain \(-x^2/2\sigma^2\), so it cancels. What is left has \(x\) only to the first power. With two different spreads, \(\sigma_A\) and \(\sigma_B\), neither the factor in step 2 nor this \(x^2\) term would cancel. That case is QDA, in section 2.
+      <li>Expand the squares. Both sides contain \(-x^2/2\sigma^2\), so it cancels. What is left has \(x\) only to the first power. This cancellation is the whole reason for the shared spread.
         $$x\,\frac{\mu_B-\mu_A}{\sigma^2}\;-\;\frac{\mu_B^2-\mu_A^2}{2\sigma^2}\;+\;\log\frac{\pi_B}{\pi_A}\;\gt\;0$$</li>
       <li>Solve for \(x\), using \(\mu_B^2-\mu_A^2=(\mu_B-\mu_A)(\mu_B+\mu_A)\).
-        $$x\;\gt\;\underbrace{\frac{\mu_A+\mu_B}{2}}_{\text{halfway between the means}}\;-\;\underbrace{\frac{\sigma^2}{\mu_B-\mu_A}\log\frac{\pi_B}{\pi_A}}_{\text{shift from the priors}}$$</li>
-      <li>Numbers, with equal priors. \(\log 1=0\), so the cut is halfway between the two means.
+        $$x\;\gt\;\underbrace{\frac{\mu_A+\mu_B}{2}}_{\text{halfway between the centres}}\;-\;\underbrace{\frac{\sigma^2}{\mu_B-\mu_A}\log\frac{\pi_B}{\pi_A}}_{\text{shift from the priors}}$$</li>
+      <li>Numbers, with equal priors. \(\log 1=0\), so the cut is halfway between the two centres.
         $$x^\ast=\frac{4.26+5.55}{2}\approx4.91\text{ cm}$$</li>
     </ol>
   </div>
   <p>The reasoning gives 4.91 cm. Go back to the first figure and set the cut to 4.90: 7 mistakes, the best possible. That is LDA with one measurement.</p>
-  <p>Why <b>linear</b>? Look at step 3 again. With the flower numbers it reads \(4.96\,x-24.33\gt0\): a number times \(x\), plus a number. An expression like that, with \(x\) only to the first power, is called linear, and its graph is a straight line. A straight line crosses zero once, so there is exactly one cut. That is the L in LDA.</p>
+  <p>Why <b>linear</b>? Look at step 3 again. With the flower numbers it reads \(5.02\,x-24.62\gt0\): a number times \(x\), plus a number. An expression with \(x\) only to the first power is called linear, and its graph is a straight line. A straight line crosses zero once, so there is exactly one cut. That is the L in LDA.</p>
+
+  <h3>How far apart are the two species?</h3>
+  <p>One number says how well any cut can work: the gap between the centres, counted in spreads.</p>
+  $$\text{separation}=\frac{\text{gap between the centres}}{\text{shared spread}}=\frac{5.55-4.26}{0.51}\approx2.5\text{ spreads}$$
+  <p>At 2.5 spreads the two bell curves overlap a little, which is why 7 flowers end up on the wrong side. Section 2 is a search for a view of the flowers in which this number is as large as possible.</p>
 
   <h3>What if one species is rare?</h3>
   <p>Suppose only one flower in five in this meadow is virginica. Then a borderline flower is more likely to be versicolor, and the cut should move toward virginica. The prior does exactly that.</p>
@@ -185,53 +200,13 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <div class="readout"></div>
     <figcaption>Each curve is now prior × likelihood, so the rarer species gets a smaller curve. The black line is where they cross.</figcaption>
   </figure>
-  <p class="sofar"><b>So far.</b> Fit a bell curve to each class, with one shared spread. Apply Bayes’ rule. The squared terms cancel and the rule is a single cut, halfway between the means, shifted by the priors.</p>
+  <p class="sofar"><b>So far.</b> Give each class its own centre and all classes one shared spread. Apply Bayes’ rule. The squared terms cancel and the rule is a single cut, halfway between the centres, shifted by the priors.</p>
 </section>
 
 <!-- ───────── 2 ───────── -->
-<section id="s-qda1">
-  <h2><span class="n">2</span>When one species varies more: QDA</h2>
-  <p>The shared spread was a convenience. Sometimes it is plainly wrong. Compare <span class="cc">setosa</span> with <span class="ca">versicolor</span>: setosa petals are all nearly the same length (spread 0.17 cm), versicolor petals vary almost three times as much (0.47 cm).</p>
-  <p class="try"><b>Try it.</b> Switch between one shared spread and a spread for each species. Watch how well the curves fit the dots, and where the cut goes.</p>
-  <figure class="fig" id="w-q1">
-    <canvas data-aspect="0.46" style="min-height:310px" aria-label="Setosa and versicolor petal lengths with fitted curves, and bars showing each spread"></canvas>
-    <div class="controls"><button data-m="0" class="on">One shared spread (LDA)</button><button data-m="1">A spread for each species (QDA)</button></div>
-    <div class="readout"></div>
-  </figure>
-  <p>With its own narrow curve, setosa claims only the lengths near 1.5 cm, and the cut moves from the halfway point toward setosa. Giving each class its own spread is <b>quadratic discriminant analysis</b> (QDA).</p>
-  <h3>Why “linear” and “quadratic”?</h3>
-  <p>Both methods compute a <b>score</b> for a flower and look at its sign. Here a positive score says versicolor and a negative one says setosa. The two names describe the formula for that score.</p>
-  <p>In section 1 the score was a number times \(x\) plus a number. Redo step 3 of the derivation with \(\sigma_A\ne\sigma_B\) and the \(x^2\) terms no longer cancel:</p>
-  $$\underbrace{\Big(\frac{1}{2\sigma_A^2}-\frac{1}{2\sigma_B^2}\Big)}_{\text{zero only if }\sigma_A=\sigma_B}x^2+\Big(\frac{\mu_B}{\sigma_B^2}-\frac{\mu_A}{\sigma_A^2}\Big)x+\text{constant}\;\gt\;0$$
-  <table class="big">
-    <tr><th></th><th>The score</th><th>Its graph</th><th>Cuts</th></tr>
-    <tr><td><b>L</b>DA, linear</td><td>\(a\,x+b\)</td><td>a straight line</td><td>crosses zero once: one cut</td></tr>
-    <tr><td><b>Q</b>DA, quadratic</td><td>\(a\,x^2+b\,x+c\)</td><td>a parabola</td><td>can cross zero twice: up to two cuts</td></tr>
-  </table>
-  <figure class="fig" id="w-lq">
-    <canvas data-aspect="0.44" style="min-height:260px" aria-label="The LDA score is a straight line and the QDA score is a parabola"></canvas>
-    <figcaption>The two scores for setosa against versicolor, from the figure above. A cut is wherever a score crosses zero. The line crosses once. The parabola crosses twice, but its first crossing is at a negative length, which no petal has.</figcaption>
-  </figure>
-  <p>With two measurements the same words apply. A linear score gives a straight boundary line and a quadratic score gives a curved one. Sections 4 and 5 show both.</p>
-  <p>A made-up example shows the two cuts more clearly than the flowers do. A machine makes bolts that should be 5 mm across. <span class="ca">Good bolts</span> are all very close to 5 mm. <span class="cb">Faulty bolts</span> are all over the place: some too thin, some too thick. So the faulty class is the wide one, and a bolt should be called faulty on <i>both</i> sides of the good range.</p>
-  <p class="try"><b>Try it.</b> Widen the spread of the good bolts and watch the good range between the two cuts grow.</p>
-  <figure class="fig" id="w-q2">
-    <p class="made">Made-up example</p>
-    <canvas data-aspect="0.4" style="min-height:250px" aria-label="Diameters of good and faulty bolts as two bell curves, with the two cuts"></canvas>
-    <div class="controls">
-      <label class="ctl">Spread of good bolts <input type="range" data-k="sa" min="0.15" max="0.6" step="0.01" value="0.3"><output></output></label>
-      <label class="ctl">Spread of faulty bolts <input type="range" data-k="sb" min="0.7" max="1.6" step="0.01" value="1.1"><output></output></label>
-    </div>
-    <div class="readout"></div>
-    <figcaption>The strip under the axis shows the prediction at each diameter. Far from 5 mm, on either side, the narrow curve has dropped to almost nothing while the wide one has not, so the wide class wins on both sides. One cut could never say “too thin or too thick”. Two cuts can, and that takes the \(x^2\) term.</figcaption>
-  </figure>
-  <p class="sofar"><b>So far.</b> Same recipe, bell curves plus Bayes’ rule. A shared spread gives one cut (LDA). Separate spreads give a quadratic rule with up to two cuts (QDA). Everything that follows is this, with more measurements.</p>
-</section>
-
-<!-- ───────── 3 ───────── -->
 <section id="s-two">
-  <h2><span class="n">3</span>Two measurements: look from the right direction</h2>
-  <p>Now take two measurements per flower: the length and the width of the sepal (the large outer part in the drawing at the top). Compare <span class="cc">setosa</span> and <span class="ca">versicolor</span>.</p>
+  <h2><span class="n">2</span>Two measurements: look from the right direction</h2>
+  <p>Now take two measurements per flower. To make the point clearly this section switches to a different pair of species and a different part of the flower: <span class="cc">setosa</span> against <span class="ca">versicolor</span>, using the length and the width of the sepal.</p>
   <p>Used alone, neither measurement works well. The best cut on sepal length makes 11 mistakes. The best cut on sepal width makes 16. Yet in the picture the two species are clearly apart. They are separated along a slanted direction.</p>
   <p>So choose a direction, and drop each flower straight onto it, like a shadow. Now every flower is one number again, its position along the line, and section 1 applies.</p>
   <p>For every direction the figure also finds the <b>best cut</b> on the shadows, the one with the fewest mistakes, exactly as in section 1. On the left it is the short black mark across the line, and flowers whose shadows fall on the wrong side of it are ringed. On the right it is the dashed line in the histogram.</p>
@@ -247,7 +222,7 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     </div>
     <div class="legend"><span><i class="dot" style="background:var(--c)"></i>setosa</span><span><i class="dot" style="background:var(--a)"></i>versicolor</span></div>
     <div class="readout"></div>
-    <figcaption>Left: the flowers and their shadows on the line. You can also drag the square handle. Right: the shadows as a histogram. The best cut for the current direction is the short mark across the line on the left and the dashed line on the right. A dot’s shadow is \(z=w^\top x\), where \(w\) is the direction of the line.</figcaption>
+    <figcaption>Left: the flowers and their shadows on the line. You can also drag the square handle. Right: the shadows as a histogram.</figcaption>
   </figure>
   <p>Near 130° the shadows separate completely: one cut gets all 100 flowers right, using one number per flower. Two overlapping measurements combine into one good one.</p>
 
@@ -264,17 +239,17 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   </aside>
   <p>First, a name for the direction. Call it \(w\). It is a pair of numbers, one weight for each measurement, and a flower’s shadow is the weighted sum</p>
   $$z \;=\; w_1\times\text{sepal length}\;+\;w_2\times\text{sepal width}.$$
-  <p>For a line at angle \(\theta\), \(w=(\cos\theta,\ \sin\theta)\). At 0° that is \(w=(1,0)\), so the shadow is the sepal length alone. At 90° it is \(w=(0,1)\), the sepal width alone. At 129° it is \(w=(-0.63,\ 0.78)\): width counts for, length counts against. Turning the line in the figure above was choosing \(w\).</p>
-  <p>Fisher gave a score \(J(w)\) for any direction \(w\). A direction is good when the two piles of shadows have centres <b>far apart</b> and are each <b>narrow</b>:</p>
-  $$J(w)=\frac{(\text{gap between the two shadow means})^2}{\text{variance of pile A}+\text{variance of pile B}}$$
+  <p>For a line at angle \(\theta\), \(w=(\cos\theta,\ \sin\theta)\). At 0° that is \(w=(1,0)\), so the shadow is the sepal length alone. At 90° it is \(w=(0,1)\), the sepal width alone. Turning the line in the figure above was choosing \(w\).</p>
+  <p>Once the flowers are shadows on a line, we are back in section 1: two piles of numbers, each with its own centre, and one shared spread. Fisher’s score for a direction is the separation from section 1, squared:</p>
+  $$J(w)=\Big(\frac{\text{gap between the two shadow centres}}{\text{shared spread of the shadows}}\Big)^{2}=\frac{(\text{gap})^2}{\text{shared variance}}$$
   <p>Both parts matter. A big gap is no use if the piles are wide enough to overlap anyway.</p>
-  <p>The figure shows every piece of that fraction. The two <b>centres</b> are marked among the flowers and dropped onto the line. On the right, the <b>gap</b> between their shadows is the black bar, and each pile has a fitted bell curve with a bar for its <b>spread</b>. Variance is spread squared.</p>
-  <p class="try"><b>Try it.</b> Turn the line and watch the gap and the two spreads change. Then press the two buttons: the line joining the centres has the bigger gap, but the highest score has much narrower piles.</p>
+  <p>The figure shows every piece. The two <b>centres</b> are marked among the flowers and dropped onto the line. On the right, the <b>gap</b> between their shadows is the black bar. Each pile has a bell curve, and both curves use the one <b>shared spread</b>, made by the rule from section 1: each pile’s own variance, then the average.</p>
+  <p class="try"><b>Try it.</b> Turn the line and watch the gap and the shared spread change. Then press the two buttons: the line joining the centres has the bigger gap, but the highest score has a much smaller spread.</p>
   <figure class="fig" id="w-p2">
     <div class="split">
       <canvas data-aspect="0.8" aria-label="Sepal data with a projection direction"></canvas>
       <div class="stack">
-        <canvas data-aspect="0.56" aria-label="Histogram of the shadows with fitted bell curves, the gap between the means and each spread"></canvas>
+        <canvas data-aspect="0.56" aria-label="Histogram of the shadows with bell curves, the gap between the centres and the shared spread"></canvas>
         <canvas data-aspect="0.4" aria-label="Fisher score against direction"></canvas>
       </div>
     </div>
@@ -283,78 +258,79 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
       <button data-go="md">Line joining the two centres</button><button data-go="fi">Highest score</button>
     </div>
     <div class="readout"></div>
-    <figcaption>Left: the large rings are the two centres, and the dotted lines drop them onto the line. Top right: each pile of shadows with its fitted bell curve. The black bar is the gap between the two shadow means; the coloured bars reach one spread (standard deviation) either side of each mean. Bottom right: the score J for every direction, scaled so the best is 1. The black marker is the current direction.</figcaption>
+    <figcaption>Left: the large rings are the two centres, and the dotted lines drop them onto the line. Top right: the two piles of shadows, the gap (black bar) and the shared spread (coloured bars, the same length for both piles). Bottom right: the score J for every direction, scaled so the best is 1. The black marker is the current direction.</figcaption>
   </figure>
-  <p>The obvious guess, the line joining the two centres (145°), also separates these flowers, but its score is lower: along that line each cloud is fairly wide, so the two piles nearly touch. The best direction (129°) leans away from it. Tilting gives up a little gap and makes the piles much narrower, which leaves more room for new flowers.</p>
-
+  <p>Sepal length alone separates the species by 2.1 spreads, and sepal width alone by 1.9. The best direction (129°) reaches 4.5. The obvious guess, the line joining the two centres (145°), has a slightly bigger gap but a wider spread, and reaches 4.0.</p>
   <div class="derive">
     <h4>Derivation: the best direction</h4>
     <ol>
       <li><b>What we want.</b> A direction \(w=(w_1,w_2)\) that makes the score as large as possible:
-        $$J(w)=\frac{(\text{gap between the two shadow means})^2}{\text{variance of pile A}+\text{variance of pile B}}$$
-        Here A is setosa and B is versicolor. First write the gap and the variances in terms of \(w\).</li>
+        $$J(w)=\frac{(\text{gap between the two shadow centres})^2}{\text{shared variance of the shadows}}$$
+        Here A is setosa and B is versicolor. First write the gap and the variance in terms of \(w\).</li>
       <li><b>The shadow of one flower.</b> A flower is a pair of numbers \(x=(x_1,x_2)\), its sepal length and width. Its shadow is the weighted sum
         $$z=w_1x_1+w_2x_2=w^\top x$$
         The symbol \(w^\top x\) is only shorthand for that sum.</li>
-      <li><b>The shadow of a centre.</b> Average the shadows of all the flowers in one class. The average of weighted sums is the weighted sum of the averages, so the mean shadow is the shadow of the class centre \(m\):
-        $$\text{mean shadow of A}=w^\top m_A\qquad\text{mean shadow of B}=w^\top m_B$$</li>
-      <li><b>The gap.</b> Subtract one from the other. Write \(d=m_B-m_A\) for the arrow from one centre to the other.
-        $$\text{gap}=w^\top m_B-w^\top m_A=w^\top(m_B-m_A)=w^\top d$$</li>
-      <li><b>The variance of one pile.</b> A class has a covariance matrix \(\Sigma\). It holds three numbers: how much length varies, how much width varies, and how much they vary together.
-        $$\Sigma=\begin{pmatrix}\text{var(length)}&\text{cov}\\ \text{cov}&\text{var(width)}\end{pmatrix}$$
-        The variance of the shadows uses all three:
-        $$\text{variance of the pile}=w_1^2\,\text{var(length)}+2\,w_1w_2\,\text{cov}+w_2^2\,\text{var(width)}$$
-        which in shorthand is \(w^\top\Sigma\,w\).</li>
-      <li><b>Both piles together.</b> Add the two variances. The two matrices add up into one, called \(S_W\) for “within the classes”.
-        $$w^\top\Sigma_A\,w+w^\top\Sigma_B\,w=w^\top(\Sigma_A+\Sigma_B)\,w=w^\top S_W\,w$$</li>
+      <li><b>The shadow of a centre.</b> Average the shadows of all the flowers in one class. The average of weighted sums is the weighted sum of the averages, so the centre of a pile is the shadow of the class centre \(\mu\):
+        $$\text{centre of pile A}=w^\top\mu_A\qquad\text{centre of pile B}=w^\top\mu_B$$</li>
+      <li><b>The gap.</b> Subtract one from the other. Write \(d=\mu_B-\mu_A\) for the arrow from one centre to the other.
+        $$\text{gap}=w^\top\mu_B-w^\top\mu_A=w^\top(\mu_B-\mu_A)=w^\top d$$</li>
+      <li><b>One class’s own variance.</b> With two measurements, a class’s spread is no longer one number. It is a small table of three, its <b>covariance matrix</b>: how much length varies, how much width varies, and how much they vary together. Call class A’s own table \(S_A\).
+        $$S_A=\begin{pmatrix}\text{var(length)}&\text{cov}\\ \text{cov}&\text{var(width)}\end{pmatrix}$$
+        The variance of pile A uses all three:
+        $$w_1^2\,\text{var(length)}+2\,w_1w_2\,\text{cov}+w_2^2\,\text{var(width)}$$
+        which in shorthand is \(w^\top S_A\,w\).</li>
+      <li><b>The shared variance.</b> Apply the one rule: take each class’s own, then average. The two tables average into one, the <b>shared covariance</b> \(\Sigma\).
+        $$\tfrac12\big(w^\top S_A\,w+w^\top S_B\,w\big)=w^\top\,\underbrace{\tfrac12(S_A+S_B)}_{\Sigma}\,w=w^\top\Sigma\,w$$</li>
       <li><b>The score in symbols.</b> Put steps 4 and 6 into the fraction.
-        $$J(w)=\frac{(w^\top d)^2}{w^\top S_W\,w}$$
+        $$J(w)=\frac{(w^\top d)^2}{w^\top\Sigma\,w}$$
         Doubling \(w\) multiplies the top and the bottom by 4, so \(J\) does not change. Only the direction of \(w\) matters, not its length.</li>
       <li><b>Where is J largest?</b> At the best direction, nudging \(w\) a little does not change \(J\): its slope is zero. For a fraction, slope zero means
         $$(\text{slope of top})\times\text{bottom}=\text{top}\times(\text{slope of bottom})$$</li>
       <li><b>The two slopes.</b> These work like the ordinary rules \((ax)^2\to2a(ax)\) and \(sx^2\to2sx\), one for each weight.
-        $$\text{slope of }(w^\top d)^2=2\,(w^\top d)\,d\qquad\text{slope of }w^\top S_W\,w=2\,S_W\,w$$</li>
+        $$\text{slope of }(w^\top d)^2=2\,(w^\top d)\,d\qquad\text{slope of }w^\top\Sigma\,w=2\,\Sigma\,w$$</li>
       <li><b>Put them in.</b>
-        $$2\,(w^\top d)\,d\;\,(w^\top S_W\,w)=(w^\top d)^2\;\,2\,S_W\,w$$
+        $$2\,(w^\top d)\,d\;\,(w^\top\Sigma\,w)=(w^\top d)^2\;\,2\,\Sigma\,w$$
         Cancel the 2 and one \((w^\top d)\) from each side.
-        $$\underbrace{(w^\top S_W\,w)}_{\text{a number}}\;d=\underbrace{(w^\top d)}_{\text{a number}}\;S_W\,w$$</li>
-      <li><b>Read it.</b> Both brackets are plain numbers. So the equation says: \(S_W\,w\) is some number times \(d\). The vector \(S_W\,w\) points along the line joining the centres.
-        $$S_W\,w\;\propto\;d$$</li>
-      <li><b>Solve for w.</b> Undo the \(S_W\) by multiplying both sides by its inverse. The unknown number does not matter, because only the direction counts (step 7).
-        $$w\;\propto\;S_W^{-1}\,d=S_W^{-1}(m_B-m_A)$$
-        Textbooks write \(S_B=d\,d^\top\) (“between the classes”) and state the same result as \(S_B\,w=J\,S_W\,w\).</li>
+        $$\underbrace{(w^\top\Sigma\,w)}_{\text{a number}}\;d=\underbrace{(w^\top d)}_{\text{a number}}\;\Sigma\,w$$</li>
+      <li><b>Read it.</b> Both brackets are plain numbers. So the equation says: \(\Sigma\,w\) is some number times \(d\). The vector \(\Sigma\,w\) points along the line joining the centres.
+        $$\Sigma\,w\;\propto\;d$$</li>
+      <li><b>Solve for w.</b> Undo the \(\Sigma\) by multiplying both sides by its inverse. The unknown number does not matter, because only the direction counts (step 7).
+        $$w\;\propto\;\Sigma^{-1}d=\Sigma^{-1}(\mu_B-\mu_A)$$
+        In one dimension this is the gap divided by the shared variance, which is the number in front of \(x\) in section 1.</li>
       <li><b>Now the numbers: the centres.</b> From the 50 setosa and 50 versicolor flowers, as (sepal length, sepal width) in cm:
-        $$m_A=(5.01,\ 3.43)\qquad m_B=(5.94,\ 2.77)$$
-        $$d=m_B-m_A=(0.93,\ -0.66)$$
+        $$\mu_A=(5.006,\ 3.428)\qquad\mu_B=(5.936,\ 2.770)$$
+        $$d=\mu_B-\mu_A=(0.930,\ -0.658)$$
         Versicolor sepals are longer and narrower. The direction of \(d\) on its own is the 145° line.</li>
-      <li><b>The covariances.</b>
-        $$\Sigma_A=\begin{pmatrix}0.122&0.097\\0.097&0.141\end{pmatrix}\qquad\Sigma_B=\begin{pmatrix}0.261&0.083\\0.083&0.097\end{pmatrix}$$
-        $$S_W=\Sigma_A+\Sigma_B=\begin{pmatrix}0.383&0.181\\0.181&0.237\end{pmatrix}$$
-        The off-diagonal 0.181 is positive: within each species, longer sepals tend to be wider. That is the slant of the two clouds.</li>
+      <li><b>Each class’s own covariance, then the average.</b>
+        $$S_A=\begin{pmatrix}0.122&0.097\\0.097&0.141\end{pmatrix}\qquad S_B=\begin{pmatrix}0.261&0.083\\0.083&0.097\end{pmatrix}$$
+        $$\Sigma=\tfrac12(S_A+S_B)=\begin{pmatrix}0.1914&0.0904\\0.0904&0.1187\end{pmatrix}$$
+        The off-diagonal 0.0904 is positive: within each species, longer sepals tend to be wider. That is the slant of the two clouds.</li>
       <li><b>The inverse.</b> For a 2 × 2 matrix, swap the diagonal, flip the sign of the other two, and divide by the determinant.
-        $$\det S_W=0.383\times0.237-0.181^2=0.058$$
-        $$S_W^{-1}=\frac{1}{0.058}\begin{pmatrix}0.237&-0.181\\-0.181&0.383\end{pmatrix}=\begin{pmatrix}4.08&-3.10\\-3.10&6.58\end{pmatrix}$$</li>
+        $$\det\Sigma=0.1914\times0.1187-0.0904^2=0.01455$$
+        $$\Sigma^{-1}=\frac{1}{0.01455}\begin{pmatrix}0.1187&-0.0904\\-0.0904&0.1914\end{pmatrix}=\begin{pmatrix}8.16&-6.21\\-6.21&13.16\end{pmatrix}$$</li>
       <li><b>The best direction.</b>
-        $$w=S_W^{-1}d=\begin{pmatrix}4.08\times0.93+(-3.10)\times(-0.66)\\-3.10\times0.93+6.58\times(-0.66)\end{pmatrix}=\begin{pmatrix}5.84\\-7.23\end{pmatrix}$$
-        Shrink it to length 1 (divide by \(\sqrt{5.84^2+7.23^2}=9.29\)):
+        $$w=\Sigma^{-1}d=\begin{pmatrix}8.16\times0.930+(-6.21)\times(-0.658)\\-6.21\times0.930+13.16\times(-0.658)\end{pmatrix}\approx\begin{pmatrix}11.7\\-14.4\end{pmatrix}$$
+        Shrink it to length 1 (divide by \(\sqrt{11.7^2+14.4^2}=18.6\)):
         $$w=(0.63,\ -0.78)$$
         That is the 129° line. The opposite arrow \((-0.63,\ 0.78)\) is the same line.</li>
       <li><b>Check against the figure.</b> With this \(w\):
-        $$\text{gap}=w^\top d=0.63\times0.93+(-0.78)\times(-0.66)=1.10$$
-        $$w^\top S_W\,w=0.118\qquad J=\frac{1.10^2}{0.118}\approx10.2$$
-        Press “Highest score” in the figure: it shows the same gap 1.10 and the same variances, 0.038 + 0.080 = 0.118. It keeps more decimals along the way and reports J = 10.17.</li>
-      <li><b>In words.</b> Start from the line joining the centres (145°). Then correct it by the shape of the clouds, which is what \(S_W^{-1}\) does. That correction is the tilt from 145° to 129°.</li>
+        $$\text{gap}=w^\top d=0.63\times0.930+(-0.78)\times(-0.658)=1.10$$
+        $$\text{shared variance}=w^\top\Sigma\,w=0.059\qquad\text{shared spread}=\sqrt{0.059}=0.24$$
+        $$\text{separation}=\frac{1.10}{0.24}\approx4.5\text{ spreads}\qquad J\approx4.5^2\approx20$$
+        Press “Highest score” in the figure: it shows the same gap and spread, and with more decimals J = 20.35.</li>
+      <li><b>In words.</b> Start from the line joining the centres (145°). Then correct it by the shape of the clouds, which is what \(\Sigma^{-1}\) does. That correction is the tilt from 145° to 129°.</li>
     </ol>
   </div>
-  <p class="sofar"><b>So far.</b> With two measurements, project the flowers onto one direction and cut there. Fisher’s best direction is \(S_W^{-1}(m_B-m_A)\). Nothing here used a bell curve.</p>
+  <p class="note">A note for when you read other texts. Fisher’s own version adds the two covariances instead of averaging them, and calls the sum \(S_W\) (“within the classes”), so \(S_W=2\Sigma\). That halves every value of \(J\) and leaves the best direction exactly where it is. Texts also write \(S_B=d\,d^\top\) (“between the classes”) and state the result as \(S_B\,w=J\,S_W\,w\). It is the same answer.</p>
+  <p class="sofar"><b>So far.</b> With two measurements, project the flowers onto one direction and cut there. The best direction is \(\Sigma^{-1}(\mu_B-\mu_A)\): the line joining the centres, corrected by the shared covariance. Nothing here used Bayes’ rule.</p>
 </section>
 
-<!-- ───────── 4 ───────── -->
+<!-- ───────── 3 ───────── -->
 <section id="s-lda">
-  <h2><span class="n">4</span>The same answer from bell curves: LDA in two dimensions</h2>
-  <p>Section 1 used bell curves and Bayes’ rule. Do the same with two measurements and see what comes out.</p>
-  <p>A bell curve in two dimensions is a hill. Its centre is the class mean \(\mu\). Its footprint is an ellipse, described by the <b>covariance matrix</b> \(\Sigma\): how much each measurement spreads, and how the two move together. LDA’s assumption is the same as before: both classes get the same \(\Sigma\), the average of their two covariances.</p>
-  <p class="try"><b>Try it.</b> Step through the figure. At the last step, drag the new flower.</p>
+  <h2><span class="n">3</span>The same answer from bell curves</h2>
+  <p>Section 1 used bell curves and Bayes’ rule. Section 2 used shadows and no probabilities at all. Now do section 1 again with two measurements, and see that it lands on the direction section 2 found.</p>
+  <p>A bell curve in two dimensions is a hill. Its centre is the class centre \(\mu\). Its footprint is an ellipse, and the shape of that ellipse is the covariance matrix. The one rule applies unchanged: each class has its own centre, and both classes share one covariance \(\Sigma\), the average of their own two.</p>
+  <p class="try"><b>Try it.</b> Step through the figure. At step 3, compare the thin dashed ellipses (each class’s own shape) with the solid ones (the shared shape). At the last step, drag the new flower.</p>
   <figure class="fig" id="w-steps">
     <canvas data-aspect="0.72" aria-label="Building the LDA boundary step by step on the sepal data"></canvas>
     <div class="controls">
@@ -364,98 +340,73 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   </figure>
   <p>The boundary is a straight line, and its direction \(w\) is the direction Fisher found. Here is why.</p>
   <div class="derive">
-    <h4>Derivation: the LDA rule for any number of measurements</h4>
+    <h4>Derivation: the LDA rule with two or more measurements</h4>
     <ol>
-      <li>The Gaussian density with mean \(\mu_k\) and covariance \(\Sigma\) in \(d\) dimensions:
-        $$p(x\mid k)=\frac{1}{(2\pi)^{d/2}|\Sigma|^{1/2}}\exp\!\Big(-\tfrac12(x-\mu_k)^\top\Sigma^{-1}(x-\mu_k)\Big)$$</li>
-      <li>Score each class by the log of prior × likelihood. The factor in front is the same for every class, so leave it out.
+      <li>The bell curve for class \(k\), with its own centre \(\mu_k\) and the shared covariance \(\Sigma\). The bracket in the exponent is the squared distance from the centre, measured in spreads.
+        $$p(x\mid k)=\frac{1}{2\pi\,|\Sigma|^{1/2}}\exp\!\Big(-\tfrac12(x-\mu_k)^\top\Sigma^{-1}(x-\mu_k)\Big)$$</li>
+      <li>Score each class by the log of prior × likelihood. The factor in front is the same for every class, because \(\Sigma\) is shared, so leave it out.
         $$\log\pi_k-\tfrac12(x-\mu_k)^\top\Sigma^{-1}(x-\mu_k)$$</li>
-      <li>Expand the bracket.
-        $$\log\pi_k\;-\;\tfrac12x^\top\Sigma^{-1}x\;+\;x^\top\Sigma^{-1}\mu_k\;-\;\tfrac12\mu_k^\top\Sigma^{-1}\mu_k$$</li>
-      <li>The term \(-\tfrac12x^\top\Sigma^{-1}x\) is the same for every class. Drop it. This is the \(x^2\) cancelling again. What is left is the <b>linear discriminant</b>:
+      <li>Expand the bracket. The term \(-\tfrac12x^\top\Sigma^{-1}x\) is the same for every class, so drop it. This is the \(x^2\) cancelling, exactly as in section 1. What is left is linear in \(x\):
         $$\delta_k(x)=x^\top\Sigma^{-1}\mu_k-\tfrac12\mu_k^\top\Sigma^{-1}\mu_k+\log\pi_k$$</li>
       <li>With two classes, choose B when \(\delta_B(x)-\delta_A(x)\gt0\). Subtracting gives \(w^\top x+b\gt0\) with
         $$w=\Sigma^{-1}(\mu_B-\mu_A),\qquad b=-\tfrac12(\mu_A+\mu_B)^\top w+\log\frac{\pi_B}{\pi_A}$$</li>
-      <li>Numbers for the sepals (A setosa, B versicolor, rounded):
-        $$w=\begin{bmatrix}8.15&amp;-6.21\\-6.21&amp;13.16\end{bmatrix}\begin{bmatrix}0.93\\-0.66\end{bmatrix}=\begin{bmatrix}11.67\\-14.43\end{bmatrix},\qquad b=-19.12$$</li>
-      <li>So the rule is: compute \(11.67\times\text{length}-14.43\times\text{width}-19.12\). Positive means versicolor. A longer sepal pushes toward versicolor, a wider one toward setosa.</li>
+      <li>The numbers are the ones from section 2 (A setosa, B versicolor, equal priors):
+        $$w=(11.67,\ -14.43),\qquad b=-19.12$$
+        So the rule is: compute \(11.67\times\text{length}-14.43\times\text{width}-19.12\). Positive means versicolor. A longer sepal pushes toward versicolor, a wider one toward setosa.</li>
     </ol>
   </div>
-  <p>Compare \(w=\Sigma^{-1}(\mu_B-\mu_A)\) with Fisher’s \(S_W^{-1}(m_B-m_A)\). The shared covariance is half of \(S_W\), so the two point the same way. LDA can be read as a probability model or as a projection, and both give the same line. The probability model adds two things: where along that direction to cut (\(b\)), and a probability for every flower.</p>
-  <p class="sofar"><b>So far.</b> LDA: one bell-shaped hill per class, all with the same footprint. The boundary is straight, with direction \(\Sigma^{-1}(\mu_B-\mu_A)\).</p>
-</section>
-
-<!-- ───────── 5 ───────── -->
-<section id="s-qda">
-  <h2><span class="n">5</span>A shape for each class: QDA in two dimensions</h2>
-  <p>As in section 2, let each class keep its own covariance \(\Sigma_k\). Then nothing cancels in the derivation, and the score for each class keeps its quadratic term:</p>
-  $$\delta_k(x)=-\tfrac12\log|\Sigma_k|-\tfrac12(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k)+\log\pi_k$$
-  <p>The middle term is a distance from the class centre, measured in units of that class’s own spread (the <b>Mahalanobis distance</b>). The first term is a penalty for being a large, spread-out class. The boundary between two classes is now a curve.</p>
-  <p class="try"><b>Try it.</b> Press each button, then drag the centres A and B.</p>
-  <figure class="fig" id="w-shapes">
-    <p class="made">Made-up example</p>
-    <canvas data-aspect="0.56" aria-label="Two Gaussian classes with LDA and QDA boundaries"></canvas>
-    <div class="controls"><button data-p="same">Same shape</button><button data-p="ell">Tight inside wide</button><button data-p="hyp">Crossed</button></div>
-    <div class="legend"><span><i style="background:var(--ink)"></i>LDA boundary</span><span><i style="background:var(--hot)"></i>QDA boundary</span></div>
-    <div class="readout"></div>
-    <figcaption>The ellipses show each class’s footprint (two standard deviations). The shading shows what QDA decides.</figcaption>
-  </figure>
-  <p>With the same shape, QDA and LDA agree. With a tight class inside a wide one, QDA draws a closed curve around the tight class, the two-dimensional version of the two cuts in section 2. A straight line cannot do that.</p>
+  <p>This \(w\) is exactly Fisher’s \(\Sigma^{-1}(\mu_B-\mu_A)\) from section 2. LDA can be read as a projection or as a probability model, and both give the same line. The probability model adds two things: where along that direction to cut (\(b\)), and a probability for every flower.</p>
 
   <h3>All three species</h3>
-  <p>More than two classes changes nothing. Compute \(\delta_k(x)\) for every class and pick the largest. Here are all 150 flowers, with petal length and width.</p>
+  <p>More than two classes changes nothing. Compute \(\delta_k(x)\) for every class and pick the largest. Here are all 150 flowers, with petal length and width. Each species has its own centre, and all three share one covariance, the average of the three.</p>
   <figure class="fig" id="w-three">
-    <canvas data-aspect="0.56" aria-label="All three iris species with LDA or QDA regions"></canvas>
-    <div class="controls"><button data-m="lda" class="on">LDA</button><button data-m="qda">QDA</button></div>
+    <canvas data-aspect="0.56" aria-label="All three iris species with LDA regions"></canvas>
     <div class="legend"><span><i class="dot" style="background:var(--c)"></i>setosa</span><span><i class="dot" style="background:var(--a)"></i>versicolor</span><span><i class="dot" style="background:var(--b)"></i>virginica</span></div>
     <div class="readout"></div>
-    <figcaption>Drag the black flower. Under LDA all three ellipses have the same shape and the borders are straight. Under QDA each species has its own ellipse and the borders bend.</figcaption>
+    <figcaption>Drag the black flower. All three ellipses have the same shape, and the borders between species are straight.</figcaption>
   </figure>
-  <p>On this data the two do about equally well. That is common, and it raises the practical question.</p>
+  <p class="sofar"><b>So far.</b> LDA: one bell-shaped hill per class, each with its own centre, all with the same footprint. The boundary is straight, with direction \(\Sigma^{-1}(\mu_B-\mu_A)\).</p>
 </section>
 
-<!-- ───────── 6 ───────── -->
-<section id="s-which">
-  <h2><span class="n">6</span>LDA or QDA?</h2>
-  <p>QDA is more flexible, so why not always use it? Because the means and covariances are not given. They are estimated from the training data, and QDA has more to estimate.</p>
-  <p>The estimates themselves are the obvious ones. For each class, the mean is the average of its points and the covariance is the average of \((x-\hat\mu_k)(x-\hat\mu_k)^\top\). The prior is the class’s share of the data. LDA then averages the class covariances into one. There is no training loop.</p>
-  <p>A covariance matrix for \(d\) measurements has \(d(d+1)/2\) separate numbers in it. LDA estimates one such matrix. QDA estimates one per class.</p>
-  <div class="scroll"><table class="big">
-    <tr><th></th><th>Covariance numbers, LDA</th><th>Covariance numbers, QDA</th></tr>
-    <tr><td>Iris: 4 measurements, 3 species</td><td>4 × 5 / 2 = 10</td><td>3 × 10 = 30</td></tr>
-    <tr><td>100 measurements, 3 classes</td><td>100 × 101 / 2 = 5,050</td><td>3 × 5,050 = 15,150</td></tr>
-  </table></div>
-  <p>With few training points, those extra numbers are estimated badly and the curve goes wrong. In the figure the two classes truly have different shapes, so QDA is the right model in principle. The grey curve is the ideal boundary.</p>
-  <p class="try"><b>Try it.</b> At 6 points per class, press “New sample” several times. Then raise the number of points.</p>
-  <figure class="fig" id="w-small">
-    <p class="made">Made-up example</p>
-    <canvas data-aspect="0.56" aria-label="LDA and QDA fitted to a small sample"></canvas>
-    <div class="controls">
-      <label class="ctl">Training points per class <input type="range" data-k="n" min="4" max="150" step="1" value="6"><output></output></label>
-      <button data-act="draw">New sample</button>
-    </div>
-    <div class="legend"><span><i style="background:var(--ink)"></i>LDA</span><span><i style="background:var(--hot)"></i>QDA</span><span><i style="background:#9AA5B5"></i>ideal boundary</span></div>
-    <div class="readout"></div>
-    <figcaption>Accuracy is measured on 4,000 fresh points that were not used for fitting.</figcaption>
-  </figure>
-  <p>With few points QDA’s curve swings wildly from sample to sample, and LDA’s line, though slightly wrong in shape, is steadier and often more accurate. With many points QDA settles onto the ideal curve and wins.</p>
-  <p>The practical rule: use LDA when data is scarce or the class shapes look alike; use QDA when there is plenty of data per class and the shapes clearly differ. There is also a middle road, <b>regularised discriminant analysis</b>, which uses a blend \((1-\alpha)\hat\Sigma_k+\alpha\hat\Sigma\) of each class’s own covariance and the shared one.</p>
-</section>
-
-<!-- ───────── 7 ───────── -->
+<!-- ───────── 4 ───────── -->
 <section id="s-pca">
-  <h2><span class="n">7</span>How this relates to PCA</h2>
-  <p>PCA also picks a direction and projects onto it. The difference is what it looks for. PCA never sees the labels. It picks the direction along which the whole cloud is most spread out:</p>
-  $$w_{\text{PCA}}=\arg\max_{\|w\|=1}\;w^\top S_T\,w\qquad(S_T=\text{covariance of all the points together})$$
-  <p>Sometimes the direction of largest spread also separates the classes. Sometimes it is the worst possible choice.</p>
-  <p class="try"><b>Try it.</b> The labels start hidden, which is what PCA sees. Press “PCA direction”. Then show the labels and press “LDA direction”.</p>
+  <h2><span class="n">4</span>How this relates to PCA</h2>
+  <p>PCA also picks a direction and projects the data onto it. If you have met PCA before, section 2 probably felt familiar. The difference is what each method looks for, and it comes down to one thing: PCA never sees the labels.</p>
+  <p>Without labels there are no classes, so there is no gap and no shared spread. All PCA can measure is how spread out the whole cloud of shadows is. It picks the direction where that total spread is largest.</p>
+  <p>Here are the same sepals as in section 2. The labels start hidden, which is what PCA sees.</p>
+  <p class="try"><b>Try it.</b> Press “PCA direction”. Then untick “Hide the labels” and look at the histogram. Then press “LDA direction”.</p>
+  <figure class="fig" id="w-p4">
+    <div class="split">
+      <canvas data-aspect="0.8" aria-label="Sepal data with a projection direction, labels hidden at first"></canvas>
+      <div class="stack">
+        <canvas data-aspect="0.42" aria-label="Histogram of the shadows"></canvas>
+        <canvas data-aspect="0.46" aria-label="Total spread and Fisher score against direction"></canvas>
+      </div>
+    </div>
+    <div class="controls">
+      <label class="ctl">Direction <input type="range" data-k="deg" min="0" max="180" step="0.5" value="60"><output></output></label>
+      <button data-go="pca">PCA direction</button><button data-go="fi">LDA direction</button>
+      <label class="ctl"><input type="checkbox" data-k="hide" checked> Hide the labels</label>
+    </div>
+    <div class="legend"><span><i style="background:#9AA5B5"></i>total spread of the shadows (what PCA maximises)</span><span><i style="background:var(--hot)"></i>Fisher’s score (what LDA maximises)</span></div>
+    <div class="readout"></div>
+  </figure>
+  <p>PCA picks 163°, close to “sepal length only”, because length is the measurement that varies most. That is a reasonable summary of the flowers, but the best cut on it gets 94 of 100 right. LDA’s 129° gets all 100.</p>
+
+  <h3>One identity connects them</h3>
+  <p>With the labels shown, the figure splits the total variance of the shadows into two parts:</p>
+  $$\underbrace{\text{total}}_{\text{PCA maximises this}}\;=\;\underbrace{\text{within}}_{\text{the shared variance}}\;+\;\underbrace{\text{between}}_{(\text{gap}/2)^2}$$
+  <p>“Within” is the shared variance inside the classes, the bottom of Fisher’s score. “Between” comes only from the gap between the two centres.</p>
+  <p>PCA maximises the sum and cannot tell the two parts apart. LDA wants the second part large and the first part small. When most of the total comes from the gap between the classes, the two methods agree. When most of it comes from spread inside the classes, PCA is led astray.</p>
+  <p>A made-up example makes the worst case plain. The two classes are long and parallel.</p>
+  <p class="try"><b>Try it.</b> Press “PCA direction”, then show the labels, then press “LDA direction”.</p>
   <figure class="fig" id="w-p3">
     <p class="made">Made-up example</p>
     <div class="split">
       <canvas data-aspect="0.8" aria-label="Two elongated parallel classes with a projection direction"></canvas>
       <div class="stack">
         <canvas data-aspect="0.42" aria-label="Histogram of the shadows"></canvas>
-        <canvas data-aspect="0.46" aria-label="Spread and Fisher score against direction"></canvas>
+        <canvas data-aspect="0.46" aria-label="Total spread and Fisher score against direction"></canvas>
       </div>
     </div>
     <div class="controls">
@@ -463,45 +414,68 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
       <button data-go="pca">PCA direction</button><button data-go="fi">LDA direction</button>
       <label class="ctl"><input type="checkbox" data-k="hide" checked> Hide the labels</label>
     </div>
-    <div class="legend"><span><i style="background:#9AA5B5"></i>spread of all shadows (what PCA maximises)</span><span><i style="background:var(--hot)"></i>Fisher’s score (what LDA maximises)</span></div>
+    <div class="legend"><span><i style="background:#9AA5B5"></i>total spread of the shadows (what PCA maximises)</span><span><i style="background:var(--hot)"></i>Fisher’s score (what LDA maximises)</span></div>
     <div class="readout"></div>
   </figure>
-  <p>The two classes are long and parallel. The cloud is longest along the cigars, so PCA projects along them and the classes land on top of each other. LDA looks across them.</p>
-  <p>The two are connected by one identity. The total spread splits into spread within the classes and spread between them: \(S_T=S_W+S_B\) (each weighted by class size). PCA maximises the total. LDA maximises between divided by within.</p>
+  <p>The cloud is longest along the two cigars, so PCA projects along them and the classes land on top of each other. Almost all of the total variance there is spread within the classes. LDA looks across the cigars, where the total is small but nearly all of it is gap.</p>
   <div class="scroll"><table class="big">
     <tr><th></th><th>PCA</th><th>LDA</th></tr>
     <tr><td>Uses the labels</td><td>No</td><td>Yes</td></tr>
-    <tr><td>Looks for</td><td>the direction of largest total spread</td><td>the direction that best separates the classes</td></tr>
-    <tr><td>Solves</td><td>\(S_Tw=\lambda w\)</td><td>\(S_Bw=\lambda S_Ww\)</td></tr>
+    <tr><td>Looks for</td><td>the direction of largest total spread</td><td>the direction where the classes are most spreads apart</td></tr>
+    <tr><td>Good for</td><td>summarising or compressing data</td><td>telling known classes apart</td></tr>
     <tr><td>Directions it can give</td><td>as many as there are measurements</td><td>number of classes minus one</td></tr>
   </table></div>
-  <p>The last row: with \(K\) classes there are \(K\) class centres, and \(K\) points span at most \(K-1\) dimensions (two points make a line, three a plane). So LDA can also be used to reduce dimensions, down to \(K-1\), keeping the class separation. <span id="pca-real"></span></p>
+  <p>The last row: with \(K\) classes there are \(K\) class centres, and \(K\) points span at most \(K-1\) dimensions (two points make a line, three a plane). So LDA can also be used to reduce dimensions, down to \(K-1\), keeping the class separation.</p>
+  <p class="sofar"><b>So far.</b> PCA and LDA both project. PCA maximises total spread and ignores the labels. LDA uses the labels to split that spread into within and between, and maximises between over within.</p>
 </section>
 
-<!-- ───────── 8 ───────── -->
+<!-- ───────── 5 ───────── -->
 <section id="s-logistic">
-  <h2><span class="n">8</span>How this relates to logistic regression</h2>
-  <p>Logistic regression says \(p(B\mid x)=\sigma(w^\top x+b)\), where \(\sigma\) is the S-shaped sigmoid. LDA turns out to say exactly the same thing.</p>
+  <h2><span class="n">5</span>How this relates to logistic regression</h2>
+  <p>Go back to section 1 and the new flower sliding along the petal-length axis. At 4 cm the probability of virginica was near 0, at 4.91 cm it was exactly one half, and at 6 cm it was near 1. Plot that probability against petal length and you get an S-shaped curve.</p>
+  <p>That curve has a name, the <b>sigmoid</b>, and it is the curve logistic regression fits. So the two methods can be drawn on the same picture. The dots are the same 100 flowers: versicolor along the bottom at 0, virginica along the top at 1.</p>
+  <p class="try"><b>Try it.</b> Slide the new flower and compare the two probabilities. Then compare the two rows of weights under the figure.</p>
+  <figure class="fig" id="w-sig">
+    <canvas data-aspect="0.46" style="min-height:280px" aria-label="Probability of virginica against petal length, from LDA and from logistic regression"></canvas>
+    <div class="controls"><label class="ctl">Petal length of the new flower <input type="range" data-k="x" min="3" max="7" step="0.01" value="5.1"><output></output> cm</label></div>
+    <div class="legend"><span><i style="background:var(--ink)"></i>LDA</span><span><i style="background:var(--c)"></i>logistic regression</span></div>
+    <div class="readout"></div>
+    <figcaption>Both curves are sigmoids of a straight-line score, \(w\,x+b\). They differ only in how \(w\) and \(b\) were found.</figcaption>
+  </figure>
+  <p>The two curves have the same shape and cross one half at almost the same place: 4.91 cm for LDA, 4.86 cm for logistic regression. The fitted one is steeper, so it is more confident on either side of the cut. LDA’s steepness is fixed by a formula, the gap divided by the shared variance. Logistic regression is free to choose it, and here the flowers near the cut are split a little more cleanly than two bell curves predict.</p>
+  <p>Here is why LDA’s probability has to be a sigmoid.</p>
   <div class="derive">
     <h4>Derivation: LDA’s probability is a sigmoid</h4>
     <ol>
-      <li>Bayes’ rule for class B.
+      <li>Bayes’ rule for class B, from section 1.
         $$p(B\mid x)=\frac{\pi_B\,p(x\mid B)}{\pi_B\,p(x\mid B)+\pi_A\,p(x\mid A)}$$</li>
-      <li>Divide top and bottom by the top.
-        $$p(B\mid x)=\frac{1}{1+e^{-a(x)}},\qquad a(x)=\log\frac{\pi_B\,p(x\mid B)}{\pi_A\,p(x\mid A)}$$</li>
-      <li>We already know \(a(x)\). It is \(\delta_B(x)-\delta_A(x)=w^\top x+b\) from section 4. So
-        $$p(B\mid x)=\sigma(w^\top x+b),\qquad w=\Sigma^{-1}(\mu_B-\mu_A)$$</li>
-      <li>With a covariance per class, \(a(x)\) is quadratic instead. QDA has the same form as logistic regression on the measurements plus their squares and products.</li>
+      <li>Divide the top and the bottom by the top.
+        $$p(B\mid x)=\frac{1}{1+e^{-a(x)}}\qquad\text{with}\qquad a(x)=\log\frac{\pi_B\,p(x\mid B)}{\pi_A\,p(x\mid A)}$$
+        The function \(1/(1+e^{-a})\) is the sigmoid.</li>
+      <li>We already worked out \(a(x)\). It is the left side of step 3 in section 1:
+        $$a(x)=\frac{\mu_B-\mu_A}{\sigma^2}\,x-\frac{\mu_B^2-\mu_A^2}{2\sigma^2}+\log\frac{\pi_B}{\pi_A}$$
+        It is a straight line in \(x\), because the \(x^2\) cancelled, and that happened because the spread is shared.</li>
+      <li>With the flower numbers:
+        $$p(\text{virginica}\mid x)=\text{sigmoid}(5.02\,x-24.62)$$
+        This is exactly the form of logistic regression, \(\text{sigmoid}(w\,x+b)\), with \(w=\text{gap}/\text{shared variance}\).</li>
+      <li>With two measurements it is the same sentence with the \(w\) and \(b\) of section 3:
+        $$p(B\mid x)=\text{sigmoid}(w^\top x+b),\qquad w=\Sigma^{-1}(\mu_B-\mu_A)$$</li>
     </ol>
   </div>
-  <p>So both models draw a straight boundary and give sigmoid probabilities. They differ in how they choose \(w\) and \(b\).</p>
+  <p>So LDA and logistic regression are the same kind of model: a straight-line score pushed through a sigmoid. They differ in how they find \(w\) and \(b\).</p>
+  <ul>
+    <li><b>LDA</b> describes each class first: its centre and the shared spread. Then \(w\) and \(b\) follow by formula. There is no search. A model built this way, from a description of what each class looks like, is called <b>generative</b>.</li>
+    <li><b>Logistic regression</b> skips the description. It tries values of \(w\) and \(b\) and keeps improving them until the sigmoid gives the highest probability to the labels actually seen. A model that only learns the boundary is called <b>discriminative</b>.</li>
+  </ul>
   <div class="scroll"><table class="big">
     <tr><th></th><th>LDA</th><th>Logistic regression</th></tr>
-    <tr><td>Describes</td><td>what each class looks like, \(p(x\mid k)\)</td><td>only the boundary, \(p(k\mid x)\)</td></tr>
-    <tr><td>Called</td><td>generative</td><td>discriminative</td></tr>
-    <tr><td>Fitting</td><td>averages and one matrix inverse</td><td>iterative optimisation</td></tr>
-    <tr><td>Influenced by</td><td>every point</td><td>mostly the points near the boundary</td></tr>
+    <tr><td>Learns</td><td>what each class looks like, \(p(x\mid k)\)</td><td>only the boundary, \(p(k\mid x)\)</td></tr>
+    <tr><td>Assumes</td><td>bell-shaped classes with one shared spread</td><td>only that the score is a straight line</td></tr>
+    <tr><td>Fitting</td><td>averages and one matrix inverse</td><td>repeated improvement</td></tr>
+    <tr><td>Influenced by</td><td>every point, however far from the boundary</td><td>mostly the points near the boundary</td></tr>
   </table></div>
+  <h3>When do they disagree?</h3>
+  <p>On the iris flowers, which are close to bell-shaped, they put the cut in nearly the same place. The last row of the table says when they will not. In this made-up example, eight extra points of class B sit in a clump.</p>
   <p class="try"><b>Try it.</b> Drag the clump of eight class-B points far to the right, deep into B’s own side.</p>
   <figure class="fig" id="w-logit">
     <p class="made">Made-up example</p>
@@ -509,16 +483,18 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <div class="controls"><button data-act="far">Send the clump far away</button><button data-act="reset">Put it back</button></div>
     <div class="legend"><span><i style="background:var(--ink)"></i>LDA</span><span><i style="background:var(--c)"></i>logistic regression</span></div>
     <div class="readout"></div>
+    <figcaption>The ellipses are LDA’s picture of the two classes: own centres, one shared shape.</figcaption>
   </figure>
-  <p>Those eight points are easy: they are far on the correct side. Logistic regression hardly reacts. LDA has to fit a bell curve through them, so B’s centre moves, the shared ellipse stretches, and the boundary shifts and starts making mistakes. When the classes really are bell-shaped, LDA’s extra assumption helps and it needs less data. When they are not, logistic regression is the safer choice.</p>
+  <p>Those eight points are easy: they are far on the correct side. Logistic regression hardly reacts. LDA has to describe class B with a bell curve that covers them, so B’s centre moves, the shared ellipse stretches, and the boundary shifts and starts making mistakes.</p>
+  <p>The practical reading: when the classes really are roughly bell-shaped, LDA’s extra assumption is extra information, and it does well with little data. When they are not, logistic regression is the safer choice.</p>
+  <p class="sofar"><b>So far.</b> LDA’s probability is a sigmoid of a straight-line score, the same form as logistic regression. LDA gets the weights by describing the classes; logistic regression gets them by searching.</p>
 </section>
 
-<!-- ───────── 9 ───────── -->
+<!-- ───────── 6 ───────── -->
 <section id="s-bayes">
-  <h2><span class="n">9</span>The Bayesian view</h2>
-  <p>LDA and QDA already use Bayes’ rule, for the class label. A Bayesian would go further in two ways.</p>
-  <p><b>The prior on the classes.</b> You saw this in section 1: \(\pi_k\) encodes what we believe before measuring, and it moves the boundary.</p>
-  <p><b>Uncertainty about the parameters.</b> So far we estimated each mean and spread and then trusted them completely. With three training flowers per class that trust is misplaced. The Bayesian fix is to average the prediction over every mean and spread that the data leave plausible. For one measurement this average has a closed form: a <b>Student-t</b> distribution centred on the sample mean, which is a bell curve with heavier tails. The fewer the data, the heavier the tails.</p>
+  <h2><span class="n">6</span>A Bayesian note</h2>
+  <p>LDA already uses Bayes’ rule for the class label, and the prior \(\pi_k\) from section 1 is a Bayesian prior. A Bayesian would go one step further.</p>
+  <p>So far we computed each centre and the spread from the data and then trusted them completely. With three training flowers per class that trust is misplaced. The Bayesian fix is to average the prediction over every centre and spread that the data leave plausible. For one measurement the result is a bell curve with heavier tails (a <b>Student-t</b> distribution). The fewer the data, the heavier the tails.</p>
   <p class="try"><b>Try it.</b> With 3 points per class, look at the bottom plot far from the data. Then raise the number of points.</p>
   <figure class="fig" id="w-bp">
     <p class="made">Made-up example</p>
@@ -535,33 +511,29 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <figcaption>Top: each class’s curve; the ticks are the training points. Bottom: the probability of class B at each x.</figcaption>
   </figure>
   <p>With little data, the plain classifier is nearly certain almost everywhere. The Bayesian one is cautious away from the data, which is the honest answer. With plenty of data the two agree.</p>
-  <p>There is a middle step too. Put a prior on each class covariance that says “probably close to the shared one”, and the best single estimate becomes a blend of the class’s own covariance and the shared one. That is the regularised discriminant analysis of section 6, now with a reason behind it.</p>
 </section>
 
-<!-- ───────── 10 ───────── -->
+<!-- ───────── 7 ───────── -->
 <section id="s-sum">
-  <h2><span class="n">10</span>Summary</h2>
-  <p>One recipe covers everything: a Gaussian for each class, then Bayes’ rule. The variants differ only in what they assume about the covariances.</p>
-  <div class="scroll"><table class="big">
-    <tr><th>Model</th><th>Covariance</th><th>Boundary</th></tr>
-    <tr><td>LDA</td><td>one, shared by all classes</td><td>straight</td></tr>
-    <tr><td>QDA</td><td>one per class</td><td>curved (quadratic)</td></tr>
-    <tr><td>Gaussian naive Bayes</td><td>one per class, with measurements assumed independent</td><td>curved, simpler</td></tr>
-    <tr><td>Regularised DA</td><td>a blend of per-class and shared</td><td>in between</td></tr>
-  </table></div>
+  <h2><span class="n">7</span>Summary</h2>
+  <p>LDA in one sentence: give every class its own centre and all classes one shared spread, then ask which class makes the new point most probable.</p>
   <ul>
-    <li><b>Fisher’s view:</b> LDA is the projection that pulls the class centres apart while keeping each class narrow.</li>
-    <li><b>PCA</b> also projects, but ignores the labels and chases total spread.</li>
-    <li><b>Logistic regression</b> has LDA’s form and fits it without assuming bell curves.</li>
-    <li><b>Bayesian treatment</b> adds priors on the classes and on the parameters, which makes the model less sure of itself when data is scarce.</li>
+    <li><b>One measurement:</b> the rule is a single cut, halfway between the centres, shifted by the priors.</li>
+    <li><b>Several measurements:</b> the rule is a straight boundary with direction \(\Sigma^{-1}(\mu_B-\mu_A)\).</li>
+    <li><b>Fisher’s view:</b> that direction is the one where the classes are the most spreads apart.</li>
+    <li><b>PCA</b> also projects, but ignores the labels and maximises total spread.</li>
+    <li><b>Logistic regression</b> has LDA’s form, a sigmoid of a straight-line score, and finds the weights by search instead of by describing the classes.</li>
+    <li><b>A Bayesian treatment</b> also admits doubt about the centres and the spread, which makes the model less sure of itself when data is scarce.</li>
   </ul>
+  <h3>What this page left out</h3>
+  <p>Everything here rests on the shared spread. Drop that rule, let each class keep its own spread, and the \(x^2\) terms no longer cancel. The boundary becomes a curve. That method is <b>quadratic discriminant analysis</b> (QDA). It fits classes of different shapes better, and it needs more data, because it has a separate covariance to estimate for every class.</p>
 
   <h3>Check yourself</h3>
+  <details class="q"><summary>What are the two moves that make the shared spread?</summary><p>Measure each class’s own spread (its variance, or its covariance matrix with several measurements). Then average them. Every figure on this page uses the result.</p></details>
   <details class="q"><summary>The share of virginica rises from 50% to 90%. What happens to the LDA cut?</summary><p>It moves toward versicolor, so more flowers are called virginica. Only \(b\) contains the prior; the direction \(w\) does not change. Try it in the last figure of section 1.</p></details>
-  <details class="q"><summary>Two classes have the same centre but different spreads. What do LDA and QDA do?</summary><p>For LDA, \(\mu_B-\mu_A=0\) gives \(w=0\): it cannot separate them at all. QDA separates “close to the centre” (the tight class) from “far from the centre” (the wide class), as in “Tight inside wide” in section 5.</p></details>
-  <details class="q"><summary>With 10 measurements and 4 classes, how many covariance numbers does each model estimate?</summary><p>One covariance has \(10\times11/2=55\) numbers. LDA estimates 55. QDA estimates \(4\times55=220\).</p></details>
-  <details class="q"><summary>Why is the best direction not simply the line joining the class centres?</summary><p>Because that line ignores the shape of the clouds. If the clouds are wide along it, the shadows overlap. Multiplying by \(S_W^{-1}\) tilts the direction toward where the clouds are narrow.</p></details>
-  <details class="q"><summary>You reduce the data to 2 dimensions with PCA and then classify. What can go wrong?</summary><p>PCA keeps the directions of largest spread. If the classes differ along a direction of small spread, as in section 7, PCA throws it away and no classifier can get it back.</p></details>
+  <details class="q"><summary>Why is the best direction not simply the line joining the class centres?</summary><p>Because that line ignores the shape of the clouds. If the clouds are wide along it, the shadows overlap. Multiplying by \(\Sigma^{-1}\) tilts the direction toward where the clouds are narrow.</p></details>
+  <details class="q"><summary>You reduce the data to 2 dimensions with PCA and then classify. What can go wrong?</summary><p>PCA keeps the directions of largest total spread. If the classes differ along a direction of small spread, as in the made-up example of section 4, PCA throws it away and no classifier can get it back.</p></details>
+  <details class="q"><summary>LDA and logistic regression both give a sigmoid of a straight-line score. Why can their answers differ?</summary><p>They find the weights differently. LDA computes them from the class centres and the shared spread, so every point counts, including easy ones far from the boundary. Logistic regression searches for the weights that best explain the labels, and is moved mostly by points near the boundary.</p></details>
 </section>
 
 <footer>Data: Edgar Anderson’s iris measurements, as used by R. A. Fisher in 1936 (150 flowers, bundled in this page). In the two-measurement scatter plots the dots are nudged by a few hundredths of a centimetre so that flowers with identical measurements do not hide each other. All fitting happens live in your browser.</footer>
@@ -727,7 +699,7 @@ const pick=(root,attr,fn)=>$$(`[${attr}]`,root).forEach(b=>b.onclick=()=>{$$(`[$
     out.innerHTML=`A petal ${f2(f[0])} cm long and ${f2(f[1])} cm wide: probably <b class="${p>.5?'cb':'ca'}">${p>.5?'virginica':'versicolor'}</b>.`+bar([['versicolor',1-p,'a'],['virginica',p,'b']])};
   pl.addHandle(()=>f,p=>{f=p});pl.draw()})();
 
-/* ================= 1 and 2. dot plots: cut, bell curves, shared or own spread ================= */
+/* ================= 1. dot plots: the cut, and bell curves with the shared spread ================= */
 function dotfig(root,opt){const pl=new Plot($('canvas',root),{xmin:opt.xmin,xmax:opt.xmax,ymin:-1,ymax:1}),out=$('.readout',root),st={mode:0};
   const V=opt.sp.map(k=>sp1(k,2)),m=V.map(mean),s=V.map(sdev),cols=opt.cols,names=opt.names;
   const top=Math.max(...V.map(v=>{const n={};let b=0;v.forEach(x=>{const k=Math.round(x*10);b=Math.max(b,n[k]=(n[k]||0)+1)});return b}));
@@ -736,11 +708,7 @@ function dotfig(root,opt){const pl=new Plot($('canvas',root),{xmin:opt.xmin,xmax
     c.font='11.5px system-ui';c.fillStyle=COL.soft;c.textAlign='center';c.textBaseline='middle';
     for(let x=Math.ceil(pl.xmin*2)/2;x<pl.xmax;x+=.5)if(pl.X(x)>16)c.fillText(x.toFixed(1),pl.X(x),pl.h-10);
     c.textAlign='right';c.fillText('petal length (cm)',pl.w-8,pl.h-26);
-    const ps=Math.sqrt((s[0]*s[0]+s[1]*s[1])/2),sig=opt.shared&&st.mode===0?[ps,ps]:s;
-    let cuts=[];
-    if(opt.shared){const[sa,sb]=sig,A=1/(2*sa*sa)-1/(2*sb*sb),Bq=m[1]/(sb*sb)-m[0]/(sa*sa),C=m[0]*m[0]/(2*sa*sa)-m[1]*m[1]/(2*sb*sb)+Math.log(sa/sb),g=x=>A*x*x+Bq*x+C;
-      if(Math.abs(A)<1e-9)cuts=[-C/Bq];else{const D=Math.sqrt(Bq*Bq-4*A*C);cuts=[(-Bq-D)/(2*A),(-Bq+D)/(2*A)].sort((a,b)=>a-b)}
-      const n=300;c.globalAlpha=.9;for(let i=0;i<n;i++){const x=pl.xmin+(i+.5)/n*(pl.xmax-pl.xmin);c.fillStyle=g(x)>0?cols[1]:cols[0];c.fillRect(i/n*pl.w,y0-3,pl.w/n+1,6)}c.globalAlpha=1}
+    const ps=Math.sqrt((s[0]*s[0]+s[1]*s[1])/2),sig=opt.shared?[ps,ps]:s;
     const wrong=opt.cut?[v=>v>st.cut,v=>v<=st.cut]:[null,null];
     V.forEach((vals,k)=>{const dir=k?-1:1,n={};vals.forEach(v=>{const key=Math.round(v*10),i=n[key]=(n[key]||0)+1,x=pl.X(key/10),y=y0-dir*((i-.5)*pitch+5);
         c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=cols[k];c.globalAlpha=.85;c.fill();c.globalAlpha=1;if(wrong[k]&&wrong[k](v)){c.strokeStyle=COL.ink;c.lineWidth=2;c.stroke()}});
@@ -753,31 +721,16 @@ function dotfig(root,opt){const pl=new Plot($('canvas',root),{xmin:opt.xmin,xmax
       out.innerHTML=`Cut at ${f2(st.cut)} cm: <b>${a}</b> versicolor and <b>${b}</b> virginica are on the wrong side. That is <b>${a+b} mistakes out of 100</b>.`}
     if(opt.curves)out.innerHTML=`<table><tr><th></th><th>mean = total length / 50</th><th>standard deviation</th></tr>
       ${V.map((v,k)=>`<tr><td class="c${opt.cls[k]}">${names[k]}</td><td>${(mean(v)*50).toFixed(1)} / 50 = <b>${f2(m[k])} cm</b></td><td><b>${f2(s[k])} cm</b></td></tr>`).join('')}</table>`;
-    if(opt.shared){cuts.filter(x=>x>pl.xmin&&x<pl.xmax).forEach(x=>{pl.vline(x,COL.ink,2.5);pl.text('cut '+f2(x),pl.X(x)+7,y0-44,COL.ink,'left',true)});
-      const bar=(k,y,sd,label,lw)=>{const x1=pl.X(m[k]-sd),x2=pl.X(m[k]+sd);c.strokeStyle=cols[k];c.lineWidth=lw;c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.moveTo(x1,y-5);c.lineTo(x1,y+5);c.moveTo(x2,y-5);c.lineTo(x2,y+5);c.stroke();
+    if(opt.shared){const bar=(k,y,sd,label)=>{const x1=pl.X(m[k]-sd),x2=pl.X(m[k]+sd);c.strokeStyle=cols[k];c.lineWidth=3;c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.moveTo(x1,y-5);c.lineTo(x1,y+5);c.moveTo(x2,y-5);c.lineTo(x2,y+5);c.stroke();
         c.font='600 12.5px system-ui';const left=x1-8-c.measureText(label).width>4;pl.text(label,left?x1-8:x2+8,y,cols[k],left?'right':'left',true)};
-      [0,1].forEach(k=>{const y=k?pl.h-62:30,d=k?-16:16;bar(k,y,sig[k],'curve ± '+f2(sig[k])+' cm',3);bar(k,y+d,s[k],'dots ± '+f2(s[k])+' cm',3)});
-      const note=' <span style="color:'+COL.soft+'">Each bar reaches one standard deviation either side of the mean: one for the dots, one for the fitted curve.</span>';
-      out.innerHTML=(st.mode===0?`Both curves use the shared spread ${f2(ps)} cm. The setosa curve is far too wide for its dots and the versicolor curve too narrow. The cut is halfway between the means: (${f2(m[0])} + ${f2(m[1])}) / 2 = <b>${f2(cuts[0])} cm</b>.`
-        :`Setosa uses its own spread ${f2(s[0])} cm and versicolor ${f2(s[1])} cm. Both curves now fit. The cut moves to <b>${f2(cuts[1])} cm</b>, much closer to setosa. (The quadratic has a second root at ${f2(cuts[0])} cm, a negative length, so it never matters here.)`)+note}};
+      [0,1].forEach(k=>{const y=k?pl.h-62:30,d=k?-16:16;bar(k,y,ps,'shared ± '+f2(ps)+' cm');bar(k,y+d,s[k],'own ± '+f2(s[k])+' cm')});
+      out.innerHTML=`<table><tr><th></th><th>centre (mean)</th><th>own spread</th><th>own variance = spread²</th></tr>
+      ${V.map((v,k)=>`<tr><td class="c${opt.cls[k]}">${names[k]}</td><td>${(mean(v)*50).toFixed(1)} / 50 = <b>${f2(m[k])} cm</b></td><td>${f2(s[k])} cm</td><td>${f2(s[k]*s[k])}</td></tr>`).join('')}</table>
+      <p>Shared variance = (${f2(s[0]*s[0])} + ${f2(s[1]*s[1])}) / 2 = ${f2(ps*ps)}. Shared spread = √${f2(ps*ps)} = <b>${f2(ps)} cm</b>.</p>`}};
   if(opt.cut)bind(root,st,()=>pl.draw());
-  if(opt.shared)pick(root,'data-m',v=>{st.mode=+v;pl.draw()});
   pl.draw()}
-(()=>{const pl=new Plot($('#w-lq canvas'),{xmin:-.6,xmax:3.6,ymin:-48,ymax:48}),V=[sp1(0,2),sp1(1,2)],m=V.map(mean),s=V.map(sdev),ps=Math.sqrt((s[0]*s[0]+s[1]*s[1])/2);
-  const q=(sa,sb)=>[1/(2*sa*sa)-1/(2*sb*sb),m[1]/(sb*sb)-m[0]/(sa*sa),m[0]*m[0]/(2*sa*sa)-m[1]*m[1]/(2*sb*sb)+Math.log(sa/sb)];
-  const L=q(ps,ps),Q=q(s[0],s[1]),lin=x=>L[1]*x+L[2],quad=x=>Q[0]*x*x+Q[1]*x+Q[2],D=Math.sqrt(Q[1]*Q[1]-4*Q[0]*Q[2]),r=[(-Q[1]-D)/(2*Q[0]),(-Q[1]+D)/(2*Q[0])],cl=-L[2]/L[1];
-  pl.draw=()=>{const c=pl.ctx;pl.clear();c.fillStyle='rgba(78,90,112,.10)';c.fillRect(0,0,pl.X(0),pl.h);pl.grid(.5,12);pl.ticks('petal length (cm)','score',.5,12);
-    pl.seg([pl.xmin,0],[pl.xmax,0],COL.soft,1.5);pl.curve(lin,COL.ink,2.5);pl.curve(quad,COL.hot,2.5);
-    const dot=(x,col)=>{c.beginPath();c.arc(pl.X(x),pl.Y(0),6,0,7);c.fillStyle='#fff';c.fill();c.strokeStyle=col;c.lineWidth=3;c.stroke()};
-    dot(cl,COL.ink);r.forEach(x=>dot(x,COL.hot));
-    pl.text('cut '+f2(cl),cl+.06,-7,COL.ink);pl.text('cut '+f2(r[1]),r[1]-.06,7,COL.hot,'right');pl.text(f2(r[0]),r[0]+.07,7,COL.hot);
-    pl.text('LDA score: a straight line',1.78,lin(1.55),COL.ink);pl.text('QDA score: a parabola',2.6,quad(2.85),COL.hot,'right');
-    if(pl.X(0)>70)pl.text('no such petal',pl.X(0)/2+6,52,COL.soft,'center',true);
-    pl.text('above zero: versicolor',pl.X(1.2),14,COL.soft,'center',true);pl.text('below zero: setosa',pl.w-10,pl.h-54,COL.soft,'right',true)};
-  pl.draw()})();
 const VV={sp:[1,2],cols:[COL.a,COL.b],cls:['a','b'],names:['versicolor','virginica'],xmin:2.8,xmax:7.2};
-dotfig($('#w-cut'),{...VV,cut:true});dotfig($('#w-bell'),{...VV,curves:true});
-dotfig($('#w-q1'),{sp:[0,1],cols:[COL.c,COL.a],cls:['c','a'],names:['setosa','versicolor'],xmin:.4,xmax:5.6,shared:true});
+dotfig($('#w-cut'),{...VV,cut:true});dotfig($('#w-bell'),{...VV,shared:true});
 
 /* ================= 1. Bayes with one measurement; prior ================= */
 function bayes(root,usePrior){const A=sp1(1,2),B=sp1(2,2),MA=mean(A),MB=mean(B),SG=Math.sqrt((sdev(A)**2+sdev(B)**2)/2),st={x:5.1,p:.5};
@@ -798,30 +751,12 @@ function bayes(root,usePrior){const A=sp1(1,2),B=sp1(2,2),MA=mean(A),MB=mean(B),
   bind(root,st,()=>pl.draw());pl.draw()}
 bayes($('#w-bayes'),false);bayes($('#w-prior'),true);
 
-/* ================= 2. made-up: two spreads ================= */
-(()=>{const root=$('#w-q2'),st={},MA=5,MB=5.3,pl=new Plot($('canvas',root),{xmin:1.6,xmax:8.8,ymin:-.2,ymax:1.3}),out=$('.readout',root);
-  pl.draw=()=>{const{sa,sb}=st,A=1/(2*sa*sa)-1/(2*sb*sb),B=MB/(sb*sb)-MA/(sa*sa),C=MA*MA/(2*sa*sa)-MB*MB/(2*sb*sb)+Math.log(sa/sb);
-    const g=x=>A*x*x+B*x+C,top=.5*npdf(MA,MA,sa)*1.22;pl.ymax=top;pl.ymin=-top*.3;
-    pl.clear();const c=pl.ctx,n=340,y0=pl.Y(0)+24,sh=20;
-    for(let i=0;i<n;i++){const x=pl.xmin+(i+.5)/n*(pl.xmax-pl.xmin);c.fillStyle=g(x)>0?COL.b:COL.a;c.fillRect(i/n*pl.w,y0,pl.w/n+1,sh)}
-    pl.curve(t=>.5*npdf(t,MB,sb),COL.b,2.5,.16);pl.curve(t=>.5*npdf(t,MA,sa),COL.a,2.5,.14);pl.axis(1);
-    pl.text('good bolts',MA+sa*.7+.1,.5*npdf(MA,MA,sa)*.93,COL.a);pl.text('faulty bolts',MB+sb*1.25,.5*npdf(MB+sb*1.25,MB,sb)+top*.07,'#B97800');
-    pl.text('diameter (mm)',pl.w-8,pl.Y(0)-12,COL.soft,'right',true);
-    const D=B*B-4*A*C,roots=D>=0?[(-B-Math.sqrt(D))/(2*A),(-B+Math.sqrt(D))/(2*A)].sort((a,b)=>a-b):[];
-    roots.forEach((r,i)=>{pl.seg([r,pl.iy(y0+sh)],[r,top*.62],COL.ink,2);pl.text('cut '+f2(r),r+(i?.07:-.07),top*.55,COL.ink,i?'left':'right')});
-    if(roots.length===2){c.font='600 12.5px system-ui';c.fillStyle='#fff';c.textBaseline='middle';c.textAlign='center';
-      [[pl.xmin,roots[0],'faulty: too thin'],[roots[0],roots[1],'good'],[roots[1],pl.xmax,'faulty: too thick']].forEach(([a,b,t])=>{const w=pl.X(b)-pl.X(a);if(c.measureText(t).width+8<w)c.fillText(t,pl.X((a+b)/2),y0+sh/2+.5);
-        else if(c.measureText(t.split(':')[0]).width+6<w)c.fillText(t.split(':')[0],pl.X((a+b)/2),y0+sh/2+.5)})}
-    out.innerHTML=roots.length<2?`With these spreads a bolt is called faulty at every diameter.`
-      :`Two cuts, at <b>${f2(roots[0])}</b> and <b>${f2(roots[1])}</b> mm. Between them the bolt is called <b class="ca">good</b>. Thinner than ${f2(roots[0])} or thicker than ${f2(roots[1])}, it is called <b class="cb">faulty</b>. The x² coefficient is 1/(2 × ${f2(sa)}²) − 1/(2 × ${f2(sb)}²) = <b>${f2(A)}</b>, not zero, which is what allows two cuts.`};
-  bind(root,st,()=>pl.draw());pl.draw()})();
-
-/* ================= 3 and 7. projection figures ================= */
+/* ================= 2 and 4. projection figures ================= */
 const bestCutAt=(z0,z1)=>{const a=[...z0.map(v=>[v,0]),...z1.map(v=>[v,1])].sort((p,q)=>p[0]-q[0]),n0=z0.length,n1=z1.length;let l0=0,l1=0,r={ok:Math.max(n0,n1),cut:null,low:0};
   for(let i=0;i+1<a.length;i++){a[i][1]?l1++:l0++;if(a[i+1][0]===a[i][0])continue;const c=(a[i][0]+a[i+1][0])/2,k0=l0+n1-l1,k1=l1+n0-l0;if(k0>r.ok)r={ok:k0,cut:c,low:0};if(k1>r.ok)r={ok:k1,cut:c,low:1}}return r};
 function projector(root,o){const cvs=$$('canvas',root),out=$('.readout',root),st={hide:false};
   const pl=new Plot(cvs[0],{...o.view,equal:true}),hi=new Plot(cvs[1],{xmin:-o.zr,xmax:o.zr,ymin:-5,ymax:30}),jc=cvs[2]&&new Plot(cvs[2],{xmin:-8,xmax:188,ymin:-.32,ymax:1.28});
-  const P=o.P,D=o.show||P,E=P.map(stats),all=stats([...P[0],...P[1]]),c0=all.mu,sw=E[0].S.map((v,i)=>v+E[1].S[i]),d=sub(E[1].mu,E[0].mu),w=mv(inv(sw),d);
+  const P=o.P,D=o.show||P,E=P.map(stats),all=stats([...P[0],...P[1]]),c0=all.mu,sw=E[0].S.map((v,i)=>(v+E[1].S[i])/2),d=sub(E[1].mu,E[0].mu),w=mv(inv(sw),d);
   const mod=a=>((a%Math.PI)+Math.PI)%Math.PI,dir={pca:mod(eig(all.S).th),md:mod(Math.atan2(d[1],d[0])),fi:mod(Math.atan2(w[1],w[0]))};
   const J=a=>{const u=[Math.cos(a),Math.sin(a)];return dot(u,d)**2/quad(sw,u)},V=a=>quad(all.S,[Math.cos(a),Math.sin(a)]),Jm=J(dir.fi),Vm=eig(all.S).l1,deg=a=>a*180/Math.PI;
   let th=0;const slider=$('[data-k=deg]',root),sOut=slider.parentElement.querySelector('output');
@@ -832,20 +767,21 @@ function projector(root,o){const cvs=$$('canvas',root),out=$('.readout',root),st
     const z=P.map(q=>q.map(pr)),bc=bestCutAt(z[0],z[1]),showCut=!st.hide&&bc.cut!=null;
     if(showCut){const q=[c0[0]+bc.cut*u[0],c0[1]+bc.cut*u[1]];const t=.035*(pl.xmax-pl.xmin);pl.seg([q[0]+t*u[1],q[1]-t*u[0]],[q[0]-t*u[1],q[1]+t*u[0]],'#fff',7);pl.seg([q[0]+t*u[1],q[1]-t*u[0]],[q[0]-t*u[1],q[1]+t*u[0]],COL.ink,3.5);
       const k=pl.ctx;k.strokeStyle=COL.ink;k.lineWidth=1.8;[0,1].forEach(i=>z[i].forEach((v,j)=>{if((v<bc.cut)!==(i===bc.low)){k.beginPath();k.arc(pl.X(D[i][j][0]),pl.Y(D[i][j][1]),5.5,0,7);k.stroke()}}))}
-    const fish=o.mode==='fisher'&&!st.hide,mm=E.map(e=>pr(e.mu)),sd=E.map(e=>Math.sqrt(quad(e.S,u)));
+    const fish=o.mode==='fisher'&&!st.hide,mm=E.map(e=>pr(e.mu)),sp=Math.sqrt(quad(sw,u)),sd=[sp,sp];
     if(fish)[0,1].forEach(i=>{const mu=E[i].mu,sh=[c0[0]+mm[i]*u[0],c0[1]+mm[i]*u[1]],k=pl.ctx;pl.seg(mu,sh,COL.ink,1.3,[3,3]);
       k.beginPath();k.arc(pl.X(mu[0]),pl.Y(mu[1]),7.5,0,7);k.fillStyle='#fff';k.fill();k.strokeStyle=col[i];k.lineWidth=3.5;k.stroke();
       k.beginPath();k.arc(pl.X(sh[0]),pl.Y(sh[1]),5.5,0,7);k.fillStyle=col[i];k.fill();k.strokeStyle='#fff';k.lineWidth=2;k.stroke();
       pl.text(i?'centre':'centre',mu[0],mu[1]+(i?-1:1)*.06*(pl.xmax-pl.xmin),col[i],'center')});
     pl.knob(pl.handles[0].get(),COL.ink,'',true);
     const nb=34,bw=2*o.zr/nb,H=z.map(q=>{const h=new Array(nb).fill(0);q.forEach(v=>{const b=Math.floor((v+o.zr)/bw);if(b>=0&&b<nb)h[b]++});return h});
-    const mx=Math.max(...H[0],...H[1],8,...(fish?[0,1].map(i=>P[i].length*bw*npdf(0,0,sd[i])):[]));hi.ymax=mx*(fish?1.62:1.4);hi.ymin=-mx*(fish?.34:.12);hi.clear();const c=hi.ctx;
+    const mx=Math.max(...H[0],...H[1],8,...(fish?[0,1].map(i=>P[i].length*bw*npdf(0,0,sd[i])):[]));hi.ymax=mx*(fish?1.62:1.4);hi.ymin=-mx*(fish?.42:.12);hi.clear();const c=hi.ctx;
     [0,1].forEach(i=>{c.fillStyle=col[i];c.globalAlpha=.6;H[i].forEach((v,b)=>{if(v)c.fillRect(hi.X(-o.zr+b*bw),hi.Y(v),hi.w/nb-1,hi.Y(0)-hi.Y(v))})});c.globalAlpha=1;
     hi.seg([-o.zr,0],[o.zr,0],COL.soft,1);hi.text('the shadows along the line',8,13,COL.soft,'left',true);
     if(showCut){hi.seg([bc.cut,0],[bc.cut,mx*1.0],COL.ink,2,[7,5]);if(!fish)hi.text('best cut',bc.cut,mx*1.11,COL.ink,'center')}
     if(fish){[0,1].forEach(i=>{const y=-mx*.17,L=mm[i]<mm[1-i],tk=mx*.05;hi.curve(t=>P[i].length*bw*npdf(t,mm[i],sd[i]),col[i],2.2);hi.seg([mm[i],0],[mm[i],mx*1.2],col[i],1.5,[3,3]);
         hi.seg([mm[i]-sd[i],y],[mm[i]+sd[i],y],col[i],3);hi.seg([mm[i]-sd[i],y-tk],[mm[i]-sd[i],y+tk],col[i],3);hi.seg([mm[i]+sd[i],y-tk],[mm[i]+sd[i],y+tk],col[i],3);
-        hi.text('spread '+f2(sd[i]),mm[i]+(L?-1:1)*(sd[i]+.07),y,col[i],L?'right':'left')});
+        });
+      hi.text('shared spread '+f2(sp)+', the same for both piles',0,-mx*.31,COL.soft,'center');
       const tk=mx*.05;hi.seg([mm[0],mx*1.2],[mm[1],mx*1.2],COL.ink,2.5);hi.seg([mm[0],mx*1.2-tk],[mm[0],mx*1.2+tk],COL.ink,2.5);hi.seg([mm[1],mx*1.2-tk],[mm[1],mx*1.2+tk],COL.ink,2.5);
       hi.text('gap '+f2(Math.abs(mm[1]-mm[0])),(mm[0]+mm[1])/2,mx*1.36,COL.ink,'center')}
     const cd=deg(mod(th));
@@ -853,11 +789,12 @@ function projector(root,o){const cvs=$$('canvas',root),out=$('.readout',root),st
       const marks=o.mode==='pca'?[['PCA',dir.pca,COL.soft]]:[['centres',dir.md,COL.soft]];if(!st.hide)marks.push([o.mode==='pca'?'LDA':'best',dir.fi,COL.hot]);
       marks.forEach(([n,a,cl],i)=>{jc.vline(deg(a),cl,1,[3,3]);jc.text(n,deg(a)+2,i?1.19:1.05,cl)});
       jc.vline(cd,COL.ink,2);jc.dots([[cd,st.hide?V(th)/Vm:J(th)/Jm]],COL.ink,5,1)}
-    const m0=pr(E[0].mu),m1=pr(E[1].mu),ok=bc.ok,v0=quad(E[0].S,u),v1=quad(E[1].S,u);
+    const m0=pr(E[0].mu),m1=pr(E[1].mu),ok=bc.ok,v0=quad(E[0].S,u),v1=quad(E[1].S,u),vp=(v0+v1)/2,gap=Math.abs(m1-m0);
     const note=o.mode==='plain'?(Math.abs(cd)<.3||Math.abs(cd-180)<.3?' This is sepal length on its own.':Math.abs(cd-90)<.3?' This is sepal width on its own.':''):'';
-    out.innerHTML=st.hide?`Direction ${cd.toFixed(0)}°. Spread (variance) of all the shadows: <b>${f2(V(th))}</b>. The largest possible is ${f2(Vm)}, at ${deg(dir.pca).toFixed(0)}°.`
+    out.innerHTML=st.hide?`Direction ${cd.toFixed(0)}°. Total variance of all the shadows: <b>${f2(V(th))}</b>. The largest possible is ${f2(Vm)}, at ${deg(dir.pca).toFixed(0)}°.`
       :o.mode==='plain'?`Direction ${cd.toFixed(0)}°.${note} The best cut on these shadows gets <b>${ok} of ${N}</b> flowers right${N-ok?`, so <b>${N-ok}</b> are ringed as mistakes`:''}.`
-      :`Direction ${cd.toFixed(0)}°. Gap between the shadow means: ${f2(Math.abs(m1-m0))}. Spreads of the two piles: ${f2(Math.sqrt(v0))} and ${f2(Math.sqrt(v1))}, so their variances (spread²) are ${f3(v0)} and ${f3(v1)}.<br>J = ${f2(Math.abs(m1-m0))}² / (${f3(v0)} + ${f3(v1)}) = <b>${f2(J(th))}</b> (the highest possible is ${f2(Jm)}). Best cut: <b>${ok} of ${N}</b> right.`;
+      :o.mode==='pca'?`Direction ${cd.toFixed(0)}°. Total variance of all the shadows: <b>${f2(V(th))}</b> = ${f2(vp)} within the classes + ${f2(gap*gap/4)} between them. PCA sees only the total (largest possible ${f2(Vm)}, at ${deg(dir.pca).toFixed(0)}°). LDA wants the gap large against the spread: separation ${f2(gap/Math.sqrt(vp))} spreads (best possible ${f2(Math.sqrt(Jm))}, at ${deg(dir.fi).toFixed(0)}°). Best cut: <b>${ok} of ${N}</b> right.`
+      :`Direction ${cd.toFixed(0)}°. Gap between the shadow centres: <b>${f2(gap)}</b>. The two piles’ own variances are ${f3(v0)} and ${f3(v1)}; their average is the shared variance ${f3(vp)}, so the shared spread is <b>${f2(Math.sqrt(vp))}</b>.<br>Separation = ${f2(gap)} / ${f2(Math.sqrt(vp))} = <b>${f2(gap/Math.sqrt(vp))} spreads</b>. J = separation² = <b>${f2(J(th))}</b> (the highest possible is ${f2(Jm)}). Best cut: <b>${ok} of ${N}</b> right.`;
     if(document.activeElement!==slider)slider.value=cd;sOut.textContent=cd.toFixed(0)+'°'};
   pl.draw=hi.draw=draw;if(jc)jc.draw=draw;
   pl.addHandle(()=>[c0[0]+o.R*Math.cos(th),c0[1]+o.R*Math.sin(th)],p=>{th=Math.atan2(p[1]-c0[1],p[0]-c0[0])});
@@ -870,42 +807,29 @@ function projector(root,o){const cvs=$$('canvas',root),out=$('.readout',root),st
 const SEP=[sp2(0,0,1),sp2(1,0,1)],SEPJ=[jit(SEP[0],5),jit(SEP[1],6)];
 const sepal={P:SEP,show:SEPJ,cols:[COL.c,COL.a],view:{xmin:3.7,xmax:7.5,yc:3.05},zr:2,grid:.5,R:1.25,labels:['sepal length (cm)','sepal width (cm)']};
 projector($('#w-p1'),{...sepal,mode:'plain'});
-(()=>{const r=projector($('#w-p2'),{...sepal,mode:'fisher'});
-  $('#pca-real').textContent=`On the real sepal data of section 3, for comparison, PCA picks ${r.deg(r.dir.pca).toFixed(0)}° and its best cut gets ${r.score(r.dir.pca)} of 100 right, against ${r.score(r.dir.fi)} for the LDA direction.`})();
+projector($('#w-p2'),{...sepal,mode:'fisher'});
+projector($('#w-p4'),{...sepal,mode:'pca'});
 (()=>{const S=covOf(2.2,.45,.5),al=[Math.cos(.5),Math.sin(.5)],pe=[-Math.sin(.5),Math.cos(.5)],m=[.95*pe[0]+.5*al[0],.95*pe[1]+.5*al[1]];
   projector($('#w-p3'),{P:[place(zs(80,61),[-m[0],-m[1]],S),place(zs(80,73),m,S)],cols:[COL.a,COL.b],view:{xmin:-5,xmax:5,yc:0},zr:5,grid:1,R:3.6,mode:'pca'})})();
 
-/* ================= 4. LDA step by step ================= */
+/* ================= 3. LDA step by step ================= */
 (()=>{const root=$('#w-steps'),pl=new Plot($('canvas',root),{xmin:3.7,xmax:7.5,equal:true,yc:3.05}),out=$('.readout',root);
   const E=SEP.map(stats),S=mix(E[0].S,E[1].S,.5),L=ldaLine(E[0].mu,E[1].mu,S,.5),d=sub(E[1].mu,E[0].mu);let step=1,f=[5.5,3];
   pl.draw=()=>{pl.clear();if(step>=4)pl.shade(x=>L.f(x)>0?1:0,.11,[RGB.c,RGB.a]);pl.grid(.5);pl.ticks('sepal length (cm)','sepal width (cm)',.5);
     pl.dots(SEPJ[0],COL.c,3.6,.7);pl.dots(SEPJ[1],COL.a,3.6,.7);
-    if(step>=3){pl.ellipse(E[0].mu,S,2,COL.c);pl.ellipse(E[1].mu,S,2,COL.a)}
+    if(step===3){pl.ctx.setLineDash([5,4]);pl.ellipse(E[0].mu,E[0].S,2,COL.c,1.3,.8);pl.ellipse(E[1].mu,E[1].S,2,COL.a,1.3,.8);pl.ctx.setLineDash([])}
+    if(step>=3){pl.ellipse(E[0].mu,S,2,COL.c,2.6);pl.ellipse(E[1].mu,S,2,COL.a,2.6)}
     if(step>=2){pl.seg(E[0].mu,E[1].mu,COL.mute,1.5,[5,4]);pl.knob(E[0].mu,COL.c,'setosa centre');pl.knob(E[1].mu,COL.a,'versicolor centre')}
     if(step>=4){pl.contour(L.f,COL.ink,3);const mid=mix(E[0].mu,E[1].mu,.5),wn=Math.hypot(L.w[0],L.w[1]),tip=add(mid,[.7*L.w[0]/wn,.7*L.w[1]/wn]);pl.arrow(mid,tip,COL.hot);pl.text('w',tip[0]+.07,tip[1],COL.hot);pl.flower(f,'new flower')}
     const sc=L.f(f);
     out.innerHTML=step===1?'50 setosa and 50 versicolor. Sepal length runs across, sepal width up.'
       :step===2?`Centre of setosa: (${f2(E[0].mu[0])}, ${f2(E[0].mu[1])}). Centre of versicolor: (${f2(E[1].mu[0])}, ${f2(E[1].mu[1])}). Difference: (${f2(d[0])}, ${f2(d[1])}).`
-      :step===3?`Each class’s covariance, and their average, which both ellipses use:${texs(String.raw`\hat\Sigma_{\text{setosa}}=${bm(E[0].S)}\quad\hat\Sigma_{\text{versicolor}}=${bm(E[1].S)}\quad\Sigma=${bm(S)}`,true)}`
+      :step===3?`Dashed: each class’s own covariance. Solid: their average, the shared covariance, drawn around each centre.${texs(String.raw`S_{\text{setosa}}=${bm(E[0].S)}\quad S_{\text{versicolor}}=${bm(E[1].S)}\quad\Sigma=\tfrac12(S_{\text{setosa}}+S_{\text{versicolor}})=${bm(S)}`,true)}`
       :`${texs(String.raw`w=\Sigma^{-1}(\mu_B-\mu_A)=${bm(inv(S))}${bv(d)}=${bv(L.w)},\qquad b=${f2(L.b)}`,true)}
         New flower (${f2(f[0])}, ${f2(f[1])}): score = ${f2(L.w[0])} × ${f2(f[0])} − ${f2(-L.w[1])} × ${f2(f[1])} − ${f2(-L.b)} = <b>${f2(sc)}</b>, which is ${sc>0?'positive':'negative'}, so <b class="${sc>0?'ca':'cc'}">${sc>0?'versicolor':'setosa'}</b>. Probability of versicolor: ${f2(1/(1+Math.exp(-sc)))}.`};
   pl.addHandle(()=>step>=4?f:null,p=>{f=p});pick(root,'data-step',v=>{step=+v;pl.draw()});pl.draw()})();
 
-/* ================= 5a. QDA shapes ================= */
-(()=>{const root=$('#w-shapes'),pl=new Plot($('canvas',root),{xmin:-6,xmax:6,equal:true}),out=$('.readout',root),Z=[zs(90,11),zs(90,23)];
-  const PR={same:[[-1.5,-.4],[1.4,.65,.6],[1.5,.4],[1.4,.65,.6]],ell:[[-.2,0],[.6,.5,0],[.7,.2],[2.2,1.7,.3]],hyp:[[-.7,0],[2,.45,.9],[.7,0],[2,.45,-.9]]};
-  let m,S;const load=k=>{const q=PR[k];m=[q[0].slice(),q[2].slice()];S=[covOf(...q[1]),covOf(...q[3])]};
-  pl.draw=()=>{const pts=[place(Z[0],m[0],S[0]),place(Z[1],m[1],S[1])],qa=scorer(m[0],S[0],.5),qb=scorer(m[1],S[1],.5),q=x=>qb(x)-qa(x),L=ldaLine(m[0],m[1],mix(S[0],S[1],.5),.5);
-    pl.clear();pl.shade(x=>q(x)>0?1:0,.12,[RGB.a,RGB.b]);pl.grid();pl.dots(pts[0],COL.a);pl.dots(pts[1],COL.b);pl.ellipse(m[0],S[0],2,COL.a);pl.ellipse(m[1],S[1],2,COL.b);
-    pl.contour(L.f,COL.ink,2.5);pl.contour(q,COL.hot,3);pl.knob(m[0],COL.a,'A');pl.knob(m[1],'#B97800','B');
-    const Sb=inv(S[1]),M=inv(S[0]).map((v,i)=>v-Sb[i]),nm=Math.abs(M[0])+Math.abs(M[1])+Math.abs(M[2]),dm=det(M);
-    const kind=nm<1e-6?'a straight line, the same as LDA, because the two shapes are identical':dm>0?'a closed curve (an ellipse)':'a pair of curves (a hyperbola)';
-    const ok=f=>pts[0].filter(x=>f(x)<=0).length+pts[1].filter(x=>f(x)>0).length;
-    out.innerHTML=`The QDA boundary is ${kind}. Of the 180 points, LDA gets <b>${ok(L.f)}</b> right and QDA <b>${ok(q)}</b>.`};
-  [0,1].forEach(i=>pl.addHandle(()=>m[i],p=>{m[i]=p}));pick(root,'data-p',k=>{load(k);pl.draw()});
-  load('ell');$('[data-p=ell]',root).classList.add('on');pl.draw()})();
-
-/* ================= 5b. three species ================= */
+/* ================= 3. three species ================= */
 (()=>{const root=$('#w-three'),pl=new Plot($('canvas',root),{xmin:.5,xmax:7.5,ymin:-.3,ymax:2.9}),out=$('.readout',root);
   const P=[0,1,2].map(k=>sp2(k,2,3)),PJ=P.map((p,k)=>jit(p,20+k)),E=P.map(stats),pool=E[0].S.map((_,i)=>(E[0].S[i]+E[1].S[i]+E[2].S[i])/3);
   const cols=[COL.c,COL.a,COL.b],rg=[RGB.c,RGB.a,RGB.b],nm=['setosa','versicolor','virginica'],ks=['c','a','b'];let mode='lda',f=[4.9,1.6];
@@ -915,24 +839,31 @@ projector($('#w-p1'),{...sepal,mode:'plain'});
   pl.draw=()=>{const M=model(mode);pl.clear();pl.shade(M.cls,.14,rg);pl.grid(1,.5);pl.ticks('petal length (cm)','petal width (cm)',1,.5);
     PJ.forEach((p,k)=>{pl.dots(p,cols[k],3.6,.75);pl.ellipse(E[k].mu,M.S[k],2,cols[k],1.8)});pl.flower(f,'new flower');
     const pr=M.prob(f);
-    out.innerHTML=`${mode==='lda'?'LDA':'QDA'} gets <b>${acc(mode)} of 150</b> of these flowers right (${mode==='lda'?'QDA':'LDA'}: ${acc(mode==='lda'?'qda':'lda')}). New flower, petal ${f2(f[0])} × ${f2(f[1])} cm: ${pr.map((p,k)=>`${nm[k]} ${f2(p)}`).join(', ')}.`+bar(pr.map((p,k)=>[nm[k],p,ks[k]]))};
-  pl.addHandle(()=>f,p=>{f=p});pick(root,'data-m',v=>{mode=v;pl.draw()});pl.draw()})();
+    out.innerHTML=`LDA gets <b>${acc(mode)} of 150</b> of these flowers right. New flower, petal ${f2(f[0])} × ${f2(f[1])} cm: ${pr.map((p,k)=>`${nm[k]} ${f2(p)}`).join(', ')}.`+bar(pr.map((p,k)=>[nm[k],p,ks[k]]))};
+  pl.addHandle(()=>f,p=>{f=p});pl.draw()})();
 
-/* ================= 6. small samples ================= */
-(()=>{const root=$('#w-small'),pl=new Plot($('canvas',root),{xmin:-6,xmax:6,equal:true}),out=$('.readout',root),st={};
-  const T={m:[[-1.2,0],[1.2,0]],S:[covOf(1.7,.55,.7),covOf(1.1,.9,-.3)]};let seed=10,Z;
-  const test=[place(zs(2000,901),T.m[0],T.S[0]),place(zs(2000,902),T.m[1],T.S[1])];
-  const acc=f=>(test[0].filter(x=>f(x)<=0).length+test[1].filter(x=>f(x)>0).length)/4000;
-  const tf=(()=>{const a=scorer(T.m[0],T.S[0],.5),b=scorer(T.m[1],T.S[1],.5);return x=>b(x)-a(x)})(),ideal=acc(tf);
-  const resample=()=>{Z=[zs(150,seed*7+1),zs(150,seed*7+2)]};resample();
-  pl.draw=()=>{const P=[0,1].map(i=>place(Z[i].slice(0,st.n),T.m[i],T.S[i])),E=P.map(stats),pool=mix(E[0].S,E[1].S,.5);
-    const model=al=>{const s=E.map(e=>{const S=mix(e.S,pool,al);S[0]+=1e-6;S[2]+=1e-6;return S}),a=scorer(E[0].mu,s[0],.5),b=scorer(E[1].mu,s[1],.5);return x=>b(x)-a(x)};
-    const q=model(0),l=model(1);pl.clear();pl.grid();pl.contour(tf,COL.mute,2);pl.dots(P[0],COL.a,4,.9);pl.dots(P[1],COL.b,4,.9);pl.contour(l,COL.ink,2.5);pl.contour(q,COL.hot,3);
-    const al=acc(l),aq=acc(q);
-    out.innerHTML=`Accuracy on fresh points: LDA <b>${pct(al)}</b>, QDA <b>${pct(aq)}</b>, the ideal boundary ${pct(ideal)}. ${Math.abs(al-aq)<.003?'A tie this time.':al>aq?'LDA wins this time.':'QDA wins this time.'}`};
-  bind(root,st,()=>pl.draw(),{n:v=>v});$('[data-act=draw]',root).onclick=()=>{seed++;resample();pl.draw()};pl.draw()})();
+/* ================= 5. LDA and logistic regression as two S-curves ================= */
+(()=>{const root=$('#w-sig'),pl=new Plot($('canvas',root),{xmin:2.8,xmax:7.2,ymin:-.3,ymax:1.3}),out=$('.readout',root),st={};
+  const A=sp1(1,2),B=sp1(2,2),MA=mean(A),MB=mean(B),s2=(sdev(A)**2+sdev(B)**2)/2,wl=(MB-MA)/s2,bl=-(MB*MB-MA*MA)/(2*s2);
+  let w=0,b=0;const xc=(MA+MB)/2,D=[...A.map(x=>[x-xc,0]),...B.map(x=>[x-xc,1])];
+  for(let it=0;it<60;it++){let g0=0,g1=0,h00=0,h01=0,h11=0;for(const[x,y]of D){const p=1/(1+Math.exp(-(b+w*x))),q=p*(1-p);g0+=y-p;g1+=(y-p)*x;h00+=q;h01+=q*x;h11+=q*x*x}
+    const dt=h00*h11-h01*h01,db=(h11*g0-h01*g1)/dt,dw=(h00*g1-h01*g0)/dt;b+=db;w+=dw;if(Math.abs(db)+Math.abs(dw)<1e-10)break}
+  const wg=w,bg=b-w*xc,sig=t=>1/(1+Math.exp(-t)),fl=x=>sig(wl*x+bl),fg=x=>sig(wg*x+bg);
+  const stack=(V,y,dir)=>{const n={},c=pl.ctx;V.forEach(v=>{const k=Math.round(v*10),i=n[k]=(n[k]||0)+1;c.beginPath();c.arc(pl.X(k/10),pl.Y(y)-dir*(i-.5)*5.2,2.3,0,7);c.fill()})};
+  pl.draw=()=>{const c=pl.ctx,x=st.x;pl.clear();[0,.5,1].forEach(y=>pl.seg([pl.xmin,y],[pl.xmax,y],y===.5?COL.mute:COL.grid,1,y===.5?[4,4]:null));
+    c.font='11.5px system-ui';c.fillStyle=COL.soft;c.textBaseline='middle';c.textAlign='center';for(let t=3;t<=7;t+=.5)c.fillText(t.toFixed(1),pl.X(t),pl.h-10);
+    c.textAlign='left';[0,.5,1].forEach(y=>c.fillText(y,6,pl.Y(y)-9));
+    pl.text('probability of virginica',8,13,COL.soft,'left',true);pl.text('petal length (cm)',pl.w-8,pl.h-26,COL.soft,'right',true);
+    c.globalAlpha=.8;c.fillStyle=COL.a;stack(A,0,-1);c.fillStyle=COL.b;stack(B,1,1);c.globalAlpha=1;
+    pl.text('versicolor',pl.X(3.05),pl.Y(0)-12,COL.a,'left',true);pl.text('virginica',pl.X(6.95),pl.Y(1)+13,'#B97800','right',true);
+    c.globalAlpha=.5;pl.curve(fg,COL.c,7);c.globalAlpha=1;pl.curve(fl,COL.ink,2.2);
+    pl.seg([x,0],[x,1],COL.ink,1.5,[5,4]);pl.dots([[x,fg(x)]],COL.c,6,1);pl.dots([[x,fl(x)]],COL.ink,4.5,1);pl.flower([x,-.17]);
+    const row=(n,k,ww,bb,how,p)=>`<tr><td class="${k}"><b>${n}</b></td><td>${f2(ww)}</td><td>${f2(bb)}</td><td>${f2(-bb/ww)} cm</td><td>${how}</td><td><b>${f2(p)}</b></td></tr>`;
+    out.innerHTML=`<table><tr><th></th><th>w</th><th>b</th><th>cut (p = 0.5)</th><th>how w was found</th><th>p(virginica) at ${f2(x)} cm</th></tr>
+      ${row('LDA','',wl,bl,`gap / shared variance = ${f2(MB-MA)} / ${f2(s2)}`,fl(x))}${row('Logistic regression','cc',wg,bg,'search for the best fit to the labels',fg(x))}</table>`};
+  bind(root,st,()=>pl.draw());pl.draw()})();
 
-/* ================= 8. logistic vs LDA ================= */
+/* ================= 5. logistic vs LDA: when they disagree ================= */
 (()=>{const root=$('#w-logit'),pl=new Plot($('canvas',root),{xmin:-5,xmax:8,equal:true}),out=$('.readout',root);
   const S=covOf(1,.8,.3),A=place(zs(40,101),[-1.3,0],S),B=place(zs(40,103),[1.3,0],S),off=zs(8,107).map(z=>[.28*z[0],.28*z[1]]),home=[2,.9];let g=home.slice();
   const solve3=(H,b)=>{const a=H.map((r,i)=>[...r,b[i]]);for(let i=0;i<3;i++){let p=i;for(let r=i+1;r<3;r++)if(Math.abs(a[r][i])>Math.abs(a[p][i]))p=r;[a[i],a[p]]=[a[p],a[i]];
@@ -952,7 +883,7 @@ projector($('#w-p1'),{...sepal,mode:'plain'});
   pl.addHandle(()=>g,p=>{g=p});
   $('[data-act=far]',root).onclick=()=>{g=[6,-2.4];pl.draw()};$('[data-act=reset]',root).onclick=()=>{g=home.slice();pl.draw()};pl.draw()})();
 
-/* ================= 9. Bayesian parameters ================= */
+/* ================= 6. Bayesian parameters ================= */
 (()=>{const root=$('#w-bp'),[c1,c2]=$$('canvas',root),out=$('.readout',root),st={},MU=[4.3,5.6],SG=.5,PX=3;let seed=4,Z;
   const top=new Plot(c1,{xmin:1.4,xmax:8.6,ymin:-.2,ymax:1.4}),bot=new Plot(c2,{xmin:1.4,xmax:8.6,ymin:-.3,ymax:1.3});
   const resample=()=>{const r=rng(seed*97+5);Z=[0,1].map(()=>Array.from({length:40},()=>randn(r)))};resample();
