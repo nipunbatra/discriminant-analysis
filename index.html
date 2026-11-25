@@ -153,6 +153,7 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     </ol>
   </div>
   <p>The reasoning gives 4.91 cm. Go back to the first figure and set the cut to 4.90: 7 mistakes, the best possible. That is LDA with one measurement.</p>
+  <p>Why <b>linear</b>? Look at step 3 again. With the flower numbers it reads \(4.96\,x-24.33\gt0\): a number times \(x\), plus a number. An expression like that, with \(x\) only to the first power, is called linear, and its graph is a straight line. A straight line crosses zero once, so there is exactly one cut. That is the L in LDA.</p>
 
   <h3>What if one species is rare?</h3>
   <p>Suppose only one flower in five in this meadow is virginica. Then a borderline flower is more likely to be versicolor, and the cut should move toward virginica. The prior does exactly that.</p>
@@ -171,14 +172,26 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   <p>The shared spread was a convenience. Sometimes it is plainly wrong. Compare <span class="cc">setosa</span> with <span class="ca">versicolor</span>: setosa petals are all nearly the same length (spread 0.17 cm), versicolor petals vary almost three times as much (0.47 cm).</p>
   <p class="try"><b>Try it.</b> Switch between one shared spread and a spread for each species. Watch how well the curves fit the dots, and where the cut goes.</p>
   <figure class="fig" id="w-q1">
-    <canvas data-aspect="0.42" aria-label="Setosa and versicolor petal lengths with fitted curves"></canvas>
+    <canvas data-aspect="0.46" style="min-height:310px" aria-label="Setosa and versicolor petal lengths with fitted curves, and bars showing each spread"></canvas>
     <div class="controls"><button data-m="0" class="on">One shared spread (LDA)</button><button data-m="1">A spread for each species (QDA)</button></div>
     <div class="readout"></div>
   </figure>
   <p>With its own narrow curve, setosa claims only the lengths near 1.5 cm, and the cut moves from the halfway point toward setosa. Giving each class its own spread is <b>quadratic discriminant analysis</b> (QDA).</p>
-  <p>The name comes from the algebra. Redo step 3 of the derivation with \(\sigma_A\ne\sigma_B\) and the \(x^2\) terms no longer cancel:</p>
+  <h3>Why “linear” and “quadratic”?</h3>
+  <p>Both methods compute a <b>score</b> for a flower and look at its sign. Here a positive score says versicolor and a negative one says setosa. The two names describe the formula for that score.</p>
+  <p>In section 1 the score was a number times \(x\) plus a number. Redo step 3 of the derivation with \(\sigma_A\ne\sigma_B\) and the \(x^2\) terms no longer cancel:</p>
   $$\underbrace{\Big(\frac{1}{2\sigma_A^2}-\frac{1}{2\sigma_B^2}\Big)}_{\text{zero only if }\sigma_A=\sigma_B}x^2+\Big(\frac{\mu_B}{\sigma_B^2}-\frac{\mu_A}{\sigma_A^2}\Big)x+\text{constant}\;\gt\;0$$
-  <p>A quadratic can cross zero twice, so there can be two cuts. A made-up example shows it more clearly than the flowers do.</p>
+  <table class="big">
+    <tr><th></th><th>The score</th><th>Its graph</th><th>Cuts</th></tr>
+    <tr><td><b>L</b>DA, linear</td><td>\(a\,x+b\)</td><td>a straight line</td><td>crosses zero once: one cut</td></tr>
+    <tr><td><b>Q</b>DA, quadratic</td><td>\(a\,x^2+b\,x+c\)</td><td>a parabola</td><td>can cross zero twice: up to two cuts</td></tr>
+  </table>
+  <figure class="fig" id="w-lq">
+    <canvas data-aspect="0.44" style="min-height:260px" aria-label="The LDA score is a straight line and the QDA score is a parabola"></canvas>
+    <figcaption>The two scores for setosa against versicolor, from the figure above. A cut is wherever a score crosses zero. The line crosses once. The parabola crosses twice, but its first crossing is at a negative length, which no petal has.</figcaption>
+  </figure>
+  <p>With two measurements the same words apply. A linear score gives a straight boundary line and a quadratic score gives a curved one. Sections 4 and 5 show both.</p>
+  <p>A made-up example shows the two cuts more clearly than the flowers do.</p>
   <figure class="fig" id="w-q2">
     <p class="made">Made-up example</p>
     <canvas data-aspect="0.36" aria-label="Two Gaussians with adjustable spreads"></canvas>
@@ -606,7 +619,7 @@ const pick=(root,attr,fn)=>$$(`[${attr}]`,root).forEach(b=>b.onclick=()=>{$$(`[$
 function dotfig(root,opt){const pl=new Plot($('canvas',root),{xmin:opt.xmin,xmax:opt.xmax,ymin:-1,ymax:1}),out=$('.readout',root),st={mode:0};
   const V=opt.sp.map(k=>sp1(k,2)),m=V.map(mean),s=V.map(sdev),cols=opt.cols,names=opt.names;
   const top=Math.max(...V.map(v=>{const n={};let b=0;v.forEach(x=>{const k=Math.round(x*10);b=Math.max(b,n[k]=(n[k]||0)+1)});return b}));
-  pl.draw=()=>{const c=pl.ctx,bin=pl.w/((pl.xmax-pl.xmin)*10),y0=pl.h/2-10,pitch=Math.min(2*clamp(bin/2-1,2,7)+1.5,(y0-22)/(top+.5)),r=pitch/2-.75;pl.clear();
+  pl.draw=()=>{const c=pl.ctx,bin=pl.w/((pl.xmax-pl.xmin)*10),y0=pl.h/2-10,pitch=Math.min(2*clamp(bin/2-1,2,7)+1.5,(y0-(opt.shared?62:22))/(top+.5)),r=pitch/2-.75;pl.clear();
     c.strokeStyle=COL.soft;c.lineWidth=1;c.beginPath();c.moveTo(0,y0);c.lineTo(pl.w,y0);c.stroke();
     c.font='11.5px system-ui';c.fillStyle=COL.soft;c.textAlign='center';c.textBaseline='middle';
     for(let x=Math.ceil(pl.xmin*2)/2;x<pl.xmax;x+=.5)if(pl.X(x)>16)c.fillText(x.toFixed(1),pl.X(x),pl.h-10);
@@ -619,6 +632,8 @@ function dotfig(root,opt){const pl=new Plot($('canvas',root),{xmin:opt.xmin,xmax
     const wrong=opt.cut?[v=>v>st.cut,v=>v<=st.cut]:[null,null];
     V.forEach((vals,k)=>{const dir=k?-1:1,n={};vals.forEach(v=>{const key=Math.round(v*10),i=n[key]=(n[key]||0)+1,x=pl.X(key/10),y=y0-dir*((i-.5)*pitch+5);
         c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=cols[k];c.globalAlpha=.85;c.fill();c.globalAlpha=1;if(wrong[k]&&wrong[k](v)){c.strokeStyle=COL.ink;c.lineWidth=2;c.stroke()}});
+      if(opt.shared){c.beginPath();c.moveTo(pl.X(m[k]-sig[k]),y0-dir*5);for(let i=0;i<=60;i++){const x=m[k]-sig[k]+i/30*sig[k];c.lineTo(pl.X(x),y0-dir*(5*npdf(x,m[k],sig[k])*pitch+5))}
+        c.lineTo(pl.X(m[k]+sig[k]),y0-dir*5);c.closePath();c.fillStyle=cols[k];c.globalAlpha=.16;c.fill();c.globalAlpha=1}
       if(opt.curves||opt.shared){c.beginPath();for(let i=0;i<=300;i++){const x=pl.xmin+i/300*(pl.xmax-pl.xmin),y=y0-dir*(5*npdf(x,m[k],sig[k])*pitch+5);i?c.lineTo(pl.X(x),y):c.moveTo(pl.X(x),y)}
         c.strokeStyle=cols[k];c.lineWidth=2.5;c.stroke();pl.text('mean '+f2(m[k]),pl.X(m[k]),k?pl.h-44:12,cols[k],'center',true)}
       pl.text(names[k],8,k?pl.h-44:12,cols[k],'left',true)});
@@ -627,11 +642,27 @@ function dotfig(root,opt){const pl=new Plot($('canvas',root),{xmin:opt.xmin,xmax
     if(opt.curves)out.innerHTML=`<table><tr><th></th><th>mean = total length / 50</th><th>standard deviation</th></tr>
       ${V.map((v,k)=>`<tr><td class="c${opt.cls[k]}">${names[k]}</td><td>${(mean(v)*50).toFixed(1)} / 50 = <b>${f2(m[k])} cm</b></td><td><b>${f2(s[k])} cm</b></td></tr>`).join('')}</table>`;
     if(opt.shared){cuts.filter(x=>x>pl.xmin&&x<pl.xmax).forEach(x=>{pl.vline(x,COL.ink,2.5);pl.text('cut '+f2(x),pl.X(x)+7,y0-44,COL.ink,'left',true)});
-      out.innerHTML=st.mode===0?`Both curves use the shared spread ${f2(ps)} cm. The setosa curve is far too wide for its dots and the versicolor curve too narrow. The cut is halfway between the means: (${f2(m[0])} + ${f2(m[1])}) / 2 = <b>${f2(cuts[0])} cm</b>.`
-        :`Setosa uses its own spread ${f2(s[0])} cm and versicolor ${f2(s[1])} cm. Both curves now fit. The cut moves to <b>${f2(cuts[1])} cm</b>, much closer to setosa. (The quadratic has a second root at ${f2(cuts[0])} cm, a negative length, so it never matters here.)`}};
+      const bar=(k,y,sd,label,lw)=>{const x1=pl.X(m[k]-sd),x2=pl.X(m[k]+sd);c.strokeStyle=cols[k];c.lineWidth=lw;c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.moveTo(x1,y-5);c.lineTo(x1,y+5);c.moveTo(x2,y-5);c.lineTo(x2,y+5);c.stroke();
+        c.font='600 12.5px system-ui';const left=x1-8-c.measureText(label).width>4;pl.text(label,left?x1-8:x2+8,y,cols[k],left?'right':'left',true)};
+      [0,1].forEach(k=>{const y=k?pl.h-62:30,d=k?-16:16;bar(k,y,sig[k],'curve ± '+f2(sig[k])+' cm',3);bar(k,y+d,s[k],'dots ± '+f2(s[k])+' cm',3)});
+      const note=' <span style="color:'+COL.soft+'">Each bar reaches one standard deviation either side of the mean: one for the dots, one for the fitted curve.</span>';
+      out.innerHTML=(st.mode===0?`Both curves use the shared spread ${f2(ps)} cm. The setosa curve is far too wide for its dots and the versicolor curve too narrow. The cut is halfway between the means: (${f2(m[0])} + ${f2(m[1])}) / 2 = <b>${f2(cuts[0])} cm</b>.`
+        :`Setosa uses its own spread ${f2(s[0])} cm and versicolor ${f2(s[1])} cm. Both curves now fit. The cut moves to <b>${f2(cuts[1])} cm</b>, much closer to setosa. (The quadratic has a second root at ${f2(cuts[0])} cm, a negative length, so it never matters here.)`)+note}};
   if(opt.cut)bind(root,st,()=>pl.draw());
   if(opt.shared)pick(root,'data-m',v=>{st.mode=+v;pl.draw()});
   pl.draw()}
+(()=>{const pl=new Plot($('#w-lq canvas'),{xmin:-.6,xmax:3.6,ymin:-48,ymax:48}),V=[sp1(0,2),sp1(1,2)],m=V.map(mean),s=V.map(sdev),ps=Math.sqrt((s[0]*s[0]+s[1]*s[1])/2);
+  const q=(sa,sb)=>[1/(2*sa*sa)-1/(2*sb*sb),m[1]/(sb*sb)-m[0]/(sa*sa),m[0]*m[0]/(2*sa*sa)-m[1]*m[1]/(2*sb*sb)+Math.log(sa/sb)];
+  const L=q(ps,ps),Q=q(s[0],s[1]),lin=x=>L[1]*x+L[2],quad=x=>Q[0]*x*x+Q[1]*x+Q[2],D=Math.sqrt(Q[1]*Q[1]-4*Q[0]*Q[2]),r=[(-Q[1]-D)/(2*Q[0]),(-Q[1]+D)/(2*Q[0])],cl=-L[2]/L[1];
+  pl.draw=()=>{const c=pl.ctx;pl.clear();c.fillStyle='rgba(78,90,112,.10)';c.fillRect(0,0,pl.X(0),pl.h);pl.grid(.5,12);pl.ticks('petal length (cm)','score',.5,12);
+    pl.seg([pl.xmin,0],[pl.xmax,0],COL.soft,1.5);pl.curve(lin,COL.ink,2.5);pl.curve(quad,COL.hot,2.5);
+    const dot=(x,col)=>{c.beginPath();c.arc(pl.X(x),pl.Y(0),6,0,7);c.fillStyle='#fff';c.fill();c.strokeStyle=col;c.lineWidth=3;c.stroke()};
+    dot(cl,COL.ink);r.forEach(x=>dot(x,COL.hot));
+    pl.text('cut '+f2(cl),cl+.06,-7,COL.ink);pl.text('cut '+f2(r[1]),r[1]-.06,7,COL.hot,'right');pl.text(f2(r[0]),r[0]+.07,7,COL.hot);
+    pl.text('LDA score: a straight line',1.78,lin(1.55),COL.ink);pl.text('QDA score: a parabola',2.6,quad(2.85),COL.hot,'right');
+    if(pl.X(0)>70)pl.text('no such petal',pl.X(0)/2+6,52,COL.soft,'center',true);
+    pl.text('above zero: versicolor',pl.X(1.2),14,COL.soft,'center',true);pl.text('below zero: setosa',pl.w-10,pl.h-54,COL.soft,'right',true)};
+  pl.draw()})();
 const VV={sp:[1,2],cols:[COL.a,COL.b],cls:['a','b'],names:['versicolor','virginica'],xmin:2.8,xmax:7.2};
 dotfig($('#w-cut'),{...VV,cut:true});dotfig($('#w-bell'),{...VV,curves:true});
 dotfig($('#w-q1'),{sp:[0,1],cols:[COL.c,COL.a],cls:['c','a'],names:['setosa','versicolor'],xmin:.4,xmax:5.6,shared:true});
