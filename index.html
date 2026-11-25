@@ -31,6 +31,21 @@ section{padding-top:80px}
 p,li{max-width:38em}
 p{margin:0 0 16px}
 .ca{color:var(--a);font-weight:600}.cb{color:#B97800;font-weight:600}.cc{color:var(--c);font-weight:600}.ch{color:var(--hot);font-weight:600}
+.iris-parts svg{display:block;width:100%;max-width:470px;height:auto;margin:0 auto 6px}
+.iris-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--grid);padding-top:12px}
+.iris-row svg{display:block;width:100%;height:auto}
+.iris-row div{text-align:center;font-size:13px;color:var(--soft);line-height:1.4}
+.iris-row b{display:block;font-size:15px;font-style:italic}
+.iris-row i.dot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:1px}
+@media(max-width:520px){.iris-row div{font-size:11px;white-space:nowrap}.iris-row b{font-size:12.5px}}
+#w-iris text{font:600 14px system-ui,sans-serif;fill:#14213D;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+#w-iris text.part{font-size:16px}
+.who{display:flex;gap:18px;align-items:flex-start;background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--hot);border-radius:10px;padding:16px 18px;margin:6px 0 22px;max-width:44em;font-family:var(--sans);font-size:15px;line-height:1.5}
+.who img{width:118px;height:auto;border-radius:8px;flex:none;filter:grayscale(1)}
+.who p{margin:0 0 8px;max-width:none}
+.who .who-name{font-weight:650;color:var(--hot);margin-bottom:4px}
+.who .who-credit{font-size:12px;color:var(--soft);margin:0}
+@media(max-width:520px){.who{gap:12px;padding:12px}.who img{width:84px}}
 .try{font-family:var(--sans);font-size:.86rem;background:#FFF6DA;border-radius:8px;padding:9px 14px;max-width:44em;margin:0 0 16px}
 .try b{font-weight:650}
 .sofar{border-left:4px solid var(--ink);padding:2px 0 2px 16px;margin:26px 0 0;max-width:38em}
@@ -100,6 +115,13 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   </figure>
   <p>That line is <b>linear discriminant analysis</b> (LDA). This page builds it slowly: first with one measurement, then with two, then with a curved boundary (QDA). After that it connects LDA to PCA, logistic regression and Bayesian thinking.</p>
   <p>The data is the iris set that Ronald Fisher used in 1936 when he invented the method: 50 flowers each of three species, with four measurements per flower.</p>
+  <h3>The flowers and what was measured</h3>
+  <p>An iris has three large outer parts called <b>sepals</b> and three smaller inner parts called <b>petals</b>. The botanist Edgar Anderson measured the length and the width of one sepal and one petal on every flower. Those are the four numbers.</p>
+  <figure class="fig" id="w-iris">
+    <div class="iris-parts"></div>
+    <div class="iris-row"></div>
+    <figcaption>Top: an average versicolor with the four measurements marked. Below: schematic flowers, drawn to one scale from the average of the 50 real flowers of each species. Setosa is easy to spot: its petals are tiny. Versicolor and virginica differ only in size, and they overlap, which is why most of this page is about those two. Real irises of all three species are violet-blue. The colour of each name is the colour that species has in the charts.</figcaption>
+  </figure>
 </header>
 
 <!-- ───────── 1 ───────── -->
@@ -191,16 +213,17 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <figcaption>The two scores for setosa against versicolor, from the figure above. A cut is wherever a score crosses zero. The line crosses once. The parabola crosses twice, but its first crossing is at a negative length, which no petal has.</figcaption>
   </figure>
   <p>With two measurements the same words apply. A linear score gives a straight boundary line and a quadratic score gives a curved one. Sections 4 and 5 show both.</p>
-  <p>A made-up example shows the two cuts more clearly than the flowers do.</p>
+  <p>A made-up example shows the two cuts more clearly than the flowers do. A machine makes bolts that should be 5 mm across. <span class="ca">Good bolts</span> are all very close to 5 mm. <span class="cb">Faulty bolts</span> are all over the place: some too thin, some too thick. So the faulty class is the wide one, and a bolt should be called faulty on <i>both</i> sides of the good range.</p>
+  <p class="try"><b>Try it.</b> Widen the spread of the good bolts and watch the good range between the two cuts grow.</p>
   <figure class="fig" id="w-q2">
     <p class="made">Made-up example</p>
-    <canvas data-aspect="0.36" aria-label="Two Gaussians with adjustable spreads"></canvas>
+    <canvas data-aspect="0.4" style="min-height:250px" aria-label="Diameters of good and faulty bolts as two bell curves, with the two cuts"></canvas>
     <div class="controls">
-      <label class="ctl">Spread of A <input type="range" data-k="sa" min="0.2" max="1.3" step="0.01" value="0.35"><output></output></label>
-      <label class="ctl">Spread of B <input type="range" data-k="sb" min="0.2" max="1.3" step="0.01" value="0.9"><output></output></label>
+      <label class="ctl">Spread of good bolts <input type="range" data-k="sa" min="0.15" max="0.6" step="0.01" value="0.3"><output></output></label>
+      <label class="ctl">Spread of faulty bolts <input type="range" data-k="sb" min="0.7" max="1.6" step="0.01" value="1.1"><output></output></label>
     </div>
     <div class="readout"></div>
-    <figcaption>The strip under the axis shows which class wins at each x. A wide bell curve has fatter tails than a narrow one, so far out on both sides the wide class wins.</figcaption>
+    <figcaption>The strip under the axis shows the prediction at each diameter. Far from 5 mm, on either side, the narrow curve has dropped to almost nothing while the wide one has not, so the wide class wins on both sides. One cut could never say “too thin or too thick”. Two cuts can, and that takes the \(x^2\) term.</figcaption>
   </figure>
   <p class="sofar"><b>So far.</b> Same recipe, bell curves plus Bayes’ rule. A shared spread gives one cut (LDA). Separate spreads give a quadratic rule with up to two cuts (QDA). Everything that follows is this, with more measurements.</p>
 </section>
@@ -208,10 +231,11 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
 <!-- ───────── 3 ───────── -->
 <section id="s-two">
   <h2><span class="n">3</span>Two measurements: look from the right direction</h2>
-  <p>Now take two measurements per flower: the length and the width of the sepal (the green leaf under the petals). Compare <span class="cc">setosa</span> and <span class="ca">versicolor</span>.</p>
+  <p>Now take two measurements per flower: the length and the width of the sepal (the large outer part in the drawing at the top). Compare <span class="cc">setosa</span> and <span class="ca">versicolor</span>.</p>
   <p>Used alone, neither measurement works well. The best cut on sepal length makes 11 mistakes. The best cut on sepal width makes 16. Yet in the picture the two species are clearly apart. They are separated along a slanted direction.</p>
   <p>So choose a direction, and drop each flower straight onto it, like a shadow. Now every flower is one number again, its position along the line, and section 1 applies.</p>
-  <p class="try"><b>Try it.</b> Turn the line. Find the direction where the two sets of shadows come apart.</p>
+  <p>For every direction the figure also finds the <b>best cut</b> on the shadows, the one with the fewest mistakes, exactly as in section 1. On the left it is the short black mark across the line, and flowers whose shadows fall on the wrong side of it are ringed. On the right it is the dashed line in the histogram.</p>
+  <p class="try"><b>Try it.</b> Press “Sepal length only”, then “Sepal width only”, and count the rings. Then turn the line and find the direction where the rings disappear.</p>
   <figure class="fig" id="w-p1">
     <div class="split">
       <canvas data-aspect="0.8" aria-label="Sepal length and width with a projection direction"></canvas>
@@ -223,21 +247,35 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     </div>
     <div class="legend"><span><i class="dot" style="background:var(--c)"></i>setosa</span><span><i class="dot" style="background:var(--a)"></i>versicolor</span></div>
     <div class="readout"></div>
-    <figcaption>Left: the flowers and their shadows on the line. You can also drag the square handle. Right: the shadows as a histogram. A dot’s shadow is \(z=w^\top x\), where \(w\) is the direction of the line.</figcaption>
+    <figcaption>Left: the flowers and their shadows on the line. You can also drag the square handle. Right: the shadows as a histogram. The best cut for the current direction is the short mark across the line on the left and the dashed line on the right. A dot’s shadow is \(z=w^\top x\), where \(w\) is the direction of the line.</figcaption>
   </figure>
   <p>Near 130° the shadows separate completely: one cut gets all 100 flowers right, using one number per flower. Two overlapping measurements combine into one good one.</p>
 
   <h3>Scoring a direction without trying them all</h3>
-  <p>Fisher gave a score for any direction. A direction is good when the two piles of shadows have centres <b>far apart</b> and are each <b>narrow</b>:</p>
+  <aside class="who">
+    <img src="fisher-1913.jpg" width="291" height="408" alt="Ronald Fisher as a young man, in 1913" loading="lazy">
+    <div>
+      <p class="who-name">Who was Fisher?</p>
+      <p><b>Ronald A. Fisher</b> (1890–1962) was a British statistician and geneticist. Working with crop experiments at the Rothamsted research station, he built much of modern statistics: the analysis of variance, maximum likelihood, and the design of experiments.</p>
+      <p>In 1936 he published “The use of multiple measurements in taxonomic problems”. It took Edgar Anderson’s iris measurements and asked which single combination of them best tells the species apart. That paper is where the linear discriminant comes from.</p>
+      <p>He was also a prominent supporter of eugenics, and the paper appeared in the <i>Annals of Eugenics</i>. Those views are widely criticised today.</p>
+      <p class="who-credit">Photo: Fisher in 1913, public domain, via Wikimedia Commons.</p>
+    </div>
+  </aside>
+  <p>First, a name for the direction. Call it \(w\). It is a pair of numbers, one weight for each measurement, and a flower’s shadow is the weighted sum</p>
+  $$z \;=\; w_1\times\text{sepal length}\;+\;w_2\times\text{sepal width}.$$
+  <p>For a line at angle \(\theta\), \(w=(\cos\theta,\ \sin\theta)\). At 0° that is \(w=(1,0)\), so the shadow is the sepal length alone. At 90° it is \(w=(0,1)\), the sepal width alone. At 129° it is \(w=(-0.63,\ 0.78)\): width counts for, length counts against. Turning the line in the figure above was choosing \(w\).</p>
+  <p>Fisher gave a score \(J(w)\) for any direction \(w\). A direction is good when the two piles of shadows have centres <b>far apart</b> and are each <b>narrow</b>:</p>
   $$J(w)=\frac{(\text{gap between the two shadow means})^2}{\text{variance of pile A}+\text{variance of pile B}}$$
   <p>Both parts matter. A big gap is no use if the piles are wide enough to overlap anyway.</p>
-  <p class="try"><b>Try it.</b> Turn the line and watch the score. Then press the buttons to compare two directions.</p>
+  <p>The figure shows every piece of that fraction. The two <b>centres</b> are marked among the flowers and dropped onto the line. On the right, the <b>gap</b> between their shadows is the black bar, and each pile has a fitted bell curve with a bar for its <b>spread</b>. Variance is spread squared.</p>
+  <p class="try"><b>Try it.</b> Turn the line and watch the gap and the two spreads change. Then press the two buttons: the line joining the centres has the bigger gap, but the highest score has much narrower piles.</p>
   <figure class="fig" id="w-p2">
     <div class="split">
       <canvas data-aspect="0.8" aria-label="Sepal data with a projection direction"></canvas>
       <div class="stack">
-        <canvas data-aspect="0.42" aria-label="Histogram of the shadows"></canvas>
-        <canvas data-aspect="0.46" aria-label="Fisher score against direction"></canvas>
+        <canvas data-aspect="0.56" aria-label="Histogram of the shadows with fitted bell curves, the gap between the means and each spread"></canvas>
+        <canvas data-aspect="0.4" aria-label="Fisher score against direction"></canvas>
       </div>
     </div>
     <div class="controls">
@@ -245,23 +283,67 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
       <button data-go="md">Line joining the two centres</button><button data-go="fi">Highest score</button>
     </div>
     <div class="readout"></div>
-    <figcaption>Bottom right: the score J for every direction, scaled so the best is 1. The black marker is the current direction.</figcaption>
+    <figcaption>Left: the large rings are the two centres, and the dotted lines drop them onto the line. Top right: each pile of shadows with its fitted bell curve. The black bar is the gap between the two shadow means; the coloured bars reach one spread (standard deviation) either side of each mean. Bottom right: the score J for every direction, scaled so the best is 1. The black marker is the current direction.</figcaption>
   </figure>
   <p>The obvious guess, the line joining the two centres (145°), also separates these flowers, but its score is lower: along that line each cloud is fairly wide, so the two piles nearly touch. The best direction (129°) leans away from it. Tilting gives up a little gap and makes the piles much narrower, which leaves more room for new flowers.</p>
 
   <div class="derive">
     <h4>Derivation: the best direction</h4>
     <ol>
-      <li>Shadows are \(z=w^\top x\). If a class has mean \(m_k\) and covariance \(\hat\Sigma_k\), its shadows have mean \(w^\top m_k\) and variance \(w^\top\hat\Sigma_k\,w\). So
-        $$J(w)=\frac{\big(w^\top(m_B-m_A)\big)^2}{w^\top(\hat\Sigma_A+\hat\Sigma_B)\,w}=\frac{w^\top S_B\,w}{w^\top S_W\,w}$$
-        with \(S_B=(m_B-m_A)(m_B-m_A)^\top\) (“between” the classes) and \(S_W=\hat\Sigma_A+\hat\Sigma_B\) (“within” them).</li>
-      <li>Set the derivative to zero. The quotient rule gives
-        $$(w^\top S_W w)\,S_B\,w=(w^\top S_B w)\,S_W\,w\quad\Longrightarrow\quad S_B\,w=J\,S_W\,w$$</li>
-      <li>Look at the left side. Whatever \(w\) is, \(S_Bw\) points along \(m_B-m_A\):
-        $$S_B\,w=(m_B-m_A)\,\underbrace{(m_B-m_A)^\top w}_{\text{just a number}}$$</li>
-      <li>So \(S_W\,w\) points along \(m_B-m_A\) too. Multiply both sides by \(S_W^{-1}\).
-        $$w\;\propto\;S_W^{-1}(m_B-m_A)$$</li>
-      <li>In words: start from the line joining the centres, then correct it by the shape of the clouds. That correction is the tilt from 145° to 129°.</li>
+      <li><b>What we want.</b> A direction \(w=(w_1,w_2)\) that makes the score as large as possible:
+        $$J(w)=\frac{(\text{gap between the two shadow means})^2}{\text{variance of pile A}+\text{variance of pile B}}$$
+        Here A is setosa and B is versicolor. First write the gap and the variances in terms of \(w\).</li>
+      <li><b>The shadow of one flower.</b> A flower is a pair of numbers \(x=(x_1,x_2)\), its sepal length and width. Its shadow is the weighted sum
+        $$z=w_1x_1+w_2x_2=w^\top x$$
+        The symbol \(w^\top x\) is only shorthand for that sum.</li>
+      <li><b>The shadow of a centre.</b> Average the shadows of all the flowers in one class. The average of weighted sums is the weighted sum of the averages, so the mean shadow is the shadow of the class centre \(m\):
+        $$\text{mean shadow of A}=w^\top m_A\qquad\text{mean shadow of B}=w^\top m_B$$</li>
+      <li><b>The gap.</b> Subtract one from the other. Write \(d=m_B-m_A\) for the arrow from one centre to the other.
+        $$\text{gap}=w^\top m_B-w^\top m_A=w^\top(m_B-m_A)=w^\top d$$</li>
+      <li><b>The variance of one pile.</b> A class has a covariance matrix \(\Sigma\). It holds three numbers: how much length varies, how much width varies, and how much they vary together.
+        $$\Sigma=\begin{pmatrix}\text{var(length)}&\text{cov}\\ \text{cov}&\text{var(width)}\end{pmatrix}$$
+        The variance of the shadows uses all three:
+        $$\text{variance of the pile}=w_1^2\,\text{var(length)}+2\,w_1w_2\,\text{cov}+w_2^2\,\text{var(width)}$$
+        which in shorthand is \(w^\top\Sigma\,w\).</li>
+      <li><b>Both piles together.</b> Add the two variances. The two matrices add up into one, called \(S_W\) for “within the classes”.
+        $$w^\top\Sigma_A\,w+w^\top\Sigma_B\,w=w^\top(\Sigma_A+\Sigma_B)\,w=w^\top S_W\,w$$</li>
+      <li><b>The score in symbols.</b> Put steps 4 and 6 into the fraction.
+        $$J(w)=\frac{(w^\top d)^2}{w^\top S_W\,w}$$
+        Doubling \(w\) multiplies the top and the bottom by 4, so \(J\) does not change. Only the direction of \(w\) matters, not its length.</li>
+      <li><b>Where is J largest?</b> At the best direction, nudging \(w\) a little does not change \(J\): its slope is zero. For a fraction, slope zero means
+        $$(\text{slope of top})\times\text{bottom}=\text{top}\times(\text{slope of bottom})$$</li>
+      <li><b>The two slopes.</b> These work like the ordinary rules \((ax)^2\to2a(ax)\) and \(sx^2\to2sx\), one for each weight.
+        $$\text{slope of }(w^\top d)^2=2\,(w^\top d)\,d\qquad\text{slope of }w^\top S_W\,w=2\,S_W\,w$$</li>
+      <li><b>Put them in.</b>
+        $$2\,(w^\top d)\,d\;\,(w^\top S_W\,w)=(w^\top d)^2\;\,2\,S_W\,w$$
+        Cancel the 2 and one \((w^\top d)\) from each side.
+        $$\underbrace{(w^\top S_W\,w)}_{\text{a number}}\;d=\underbrace{(w^\top d)}_{\text{a number}}\;S_W\,w$$</li>
+      <li><b>Read it.</b> Both brackets are plain numbers. So the equation says: \(S_W\,w\) is some number times \(d\). The vector \(S_W\,w\) points along the line joining the centres.
+        $$S_W\,w\;\propto\;d$$</li>
+      <li><b>Solve for w.</b> Undo the \(S_W\) by multiplying both sides by its inverse. The unknown number does not matter, because only the direction counts (step 7).
+        $$w\;\propto\;S_W^{-1}\,d=S_W^{-1}(m_B-m_A)$$
+        Textbooks write \(S_B=d\,d^\top\) (“between the classes”) and state the same result as \(S_B\,w=J\,S_W\,w\).</li>
+      <li><b>Now the numbers: the centres.</b> From the 50 setosa and 50 versicolor flowers, as (sepal length, sepal width) in cm:
+        $$m_A=(5.01,\ 3.43)\qquad m_B=(5.94,\ 2.77)$$
+        $$d=m_B-m_A=(0.93,\ -0.66)$$
+        Versicolor sepals are longer and narrower. The direction of \(d\) on its own is the 145° line.</li>
+      <li><b>The covariances.</b>
+        $$\Sigma_A=\begin{pmatrix}0.122&0.097\\0.097&0.141\end{pmatrix}\qquad\Sigma_B=\begin{pmatrix}0.261&0.083\\0.083&0.097\end{pmatrix}$$
+        $$S_W=\Sigma_A+\Sigma_B=\begin{pmatrix}0.383&0.181\\0.181&0.237\end{pmatrix}$$
+        The off-diagonal 0.181 is positive: within each species, longer sepals tend to be wider. That is the slant of the two clouds.</li>
+      <li><b>The inverse.</b> For a 2 × 2 matrix, swap the diagonal, flip the sign of the other two, and divide by the determinant.
+        $$\det S_W=0.383\times0.237-0.181^2=0.058$$
+        $$S_W^{-1}=\frac{1}{0.058}\begin{pmatrix}0.237&-0.181\\-0.181&0.383\end{pmatrix}=\begin{pmatrix}4.08&-3.10\\-3.10&6.58\end{pmatrix}$$</li>
+      <li><b>The best direction.</b>
+        $$w=S_W^{-1}d=\begin{pmatrix}4.08\times0.93+(-3.10)\times(-0.66)\\-3.10\times0.93+6.58\times(-0.66)\end{pmatrix}=\begin{pmatrix}5.84\\-7.23\end{pmatrix}$$
+        Shrink it to length 1 (divide by \(\sqrt{5.84^2+7.23^2}=9.29\)):
+        $$w=(0.63,\ -0.78)$$
+        That is the 129° line. The opposite arrow \((-0.63,\ 0.78)\) is the same line.</li>
+      <li><b>Check against the figure.</b> With this \(w\):
+        $$\text{gap}=w^\top d=0.63\times0.93+(-0.78)\times(-0.66)=1.10$$
+        $$w^\top S_W\,w=0.118\qquad J=\frac{1.10^2}{0.118}\approx10.2$$
+        Press “Highest score” in the figure: it shows the same gap 1.10 and the same variances, 0.038 + 0.080 = 0.118. It keeps more decimals along the way and reports J = 10.17.</li>
+      <li><b>In words.</b> Start from the line joining the centres (145°). Then correct it by the shape of the clouds, which is what \(S_W^{-1}\) does. That correction is the tilt from 145° to 129°.</li>
     </ol>
   </div>
   <p class="sofar"><b>So far.</b> With two measurements, project the flowers onto one direction and cut there. Fisher’s best direction is \(S_W^{-1}(m_B-m_A)\). Nothing here used a bell curve.</p>
@@ -606,6 +688,36 @@ function bind(root,st,draw,fmt={}){const ins=$$('[data-k]',root);
   show()}
 const pick=(root,attr,fn)=>$$(`[${attr}]`,root).forEach(b=>b.onclick=()=>{$$(`[${attr}]`,root).forEach(x=>x.classList.toggle('on',x===b));fn(b.getAttribute(attr))});
 
+/* ================= the three species, drawn to scale ================= */
+(()=>{const root=$('#w-iris'),cols=[COL.c,COL.a,COL.b],names=['setosa','versicolor','virginica'],M=[0,1,2].map(k=>[0,1,2,3].map(i=>mean(sp1(k,i))));
+  const TONE=[{s0:'#E4E1FA',s1:'#8E84E2',p0:'#A79EEA',p1:'#5F52C8',ln:'#43389E'},{s0:'#E3D8F8',s1:'#7E5CD2',p0:'#9B7FE0',p1:'#5433B4',ln:'#3A2488'},{s0:'#DCCFF5',s1:'#6A45C4',p0:'#8A68D6',p1:'#48279E',ln:'#311A78'}];
+  const bez=(P,t)=>{const u=1-t;return[u*u*u*P[0][0]+3*u*u*t*P[1][0]+3*u*t*t*P[2][0]+t*t*t*P[3][0],u*u*u*P[0][1]+3*u*u*t*P[1][1]+3*u*t*t*P[2][1]+t*t*t*P[3][1]]};
+  const SH={sepal:[[0,0],[.22,-.12],[1.22,-.26],[1,-.64],[.8,-.95],[.3,-1],[0,-1]],petal:[[0,0],[.16,-.2],[1.08,-.34],[1,-.6],[.92,-.84],[.22,-.99],[0,-1]]};
+  const outline=(L,W,kind)=>{const P=SH[kind];let mx=0,my=0;for(const seg of[P.slice(0,4),P.slice(3,7)])for(let t=0;t<=1;t+=.02){const q=bez(seg,t);if(q[0]>mx){mx=q[0];my=q[1]}}
+    const a=W/2/mx,pt=(q,sg)=>`${(sg*q[0]*a).toFixed(1)},${(q[1]*L).toFixed(1)}`,R=P.slice().reverse();
+    return{d:`M0,0 C${pt(P[1],1)} ${pt(P[2],1)} ${pt(P[3],1)} C${pt(P[4],1)} ${pt(P[5],1)} ${pt(P[6],1)} C${pt(R[1],-1)} ${pt(R[2],-1)} ${pt(R[3],-1)} C${pt(R[4],-1)} ${pt(R[5],-1)} 0,0Z`,yw:my*L}};
+  const leaf=(L,W,rot,kind,k,id)=>{const o=outline(L,W,kind),hw=W/2,T=TONE[k],sep=kind==='sepal';
+    const veins=(sep?[-.82,-.6,-.38,-.18,0,.18,.38,.6,.82]:[-.6,-.3,0,.3,.6]).map(u=>`M0,${(-.08*L).toFixed(1)} Q${(u*hw*1.02).toFixed(1)},${(-.44*L).toFixed(1)} ${(u*hw*.66).toFixed(1)},${(-(.9-.14*Math.abs(u))*L).toFixed(1)}`).join('');
+    const sig=sep?`<ellipse cx="0" cy="${(-.2*L).toFixed(1)}" rx="${(.5*hw).toFixed(1)}" ry="${(.2*L).toFixed(1)}" fill="url(#${id}g)"/>`+[-.3,-.15,0,.15,.3].map(u=>`<path d="M0,${(-.04*L).toFixed(1)} Q${(u*hw).toFixed(1)},${(-.16*L).toFixed(1)} ${(u*hw*1.2).toFixed(1)},${(-.33*L).toFixed(1)}" stroke="${T.ln}" stroke-width=".8" stroke-opacity=".7" fill="none"/>`).join(''):'';
+    return `<g transform="rotate(${rot})"><path d="${o.d}" fill="url(#${id}${sep?'s':'p'})" stroke="${T.ln}" stroke-width="1.1" stroke-linejoin="round"/><path d="${veins}" stroke="${sep?T.p1:T.ln}" stroke-width=".7" stroke-opacity="${sep?.38:.45}" fill="none"/>${sig}</g>`};
+  const defs=(k,id)=>{const T=TONE[k];return `<defs><linearGradient id="${id}s" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${T.s0}"/><stop offset=".45" stop-color="${T.s0}"/><stop offset="1" stop-color="${T.s1}"/></linearGradient>
+    <linearGradient id="${id}p" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${T.p0}"/><stop offset="1" stop-color="${T.p1}"/></linearGradient>
+    <radialGradient id="${id}g"><stop offset="0" stop-color="#F7C52B"/><stop offset=".45" stop-color="#FBE08A" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`};
+  const flower=(k,S,id)=>{const[sl,sw,pl,pw]=M[k].map(v=>v*S);return defs(k,id)+`<g style="filter:drop-shadow(0 ${(S*.08).toFixed(1)}px ${(S*.1).toFixed(1)}px rgba(20,33,61,.22))">`+[180,60,-60].map(r=>leaf(sl,sw,r,'sepal',k,id)).join('')+[0,120,-120].map(r=>leaf(pl,pw,r,'petal',k,id)).join('')+`</g><circle r="${(.2*S).toFixed(1)}" fill="#E9B81F" stroke="#fff" stroke-width="${(S*.035).toFixed(1)}"/>`+[90,210,330].map(a=>`<circle cx="${(.09*S*Math.cos(a*Math.PI/180)).toFixed(1)}" cy="${(.09*S*Math.sin(a*Math.PI/180)).toFixed(1)}" r="${(.045*S).toFixed(1)}" fill="#8A5A00"/>`).join('')};
+  const bar=(x1,y1,x2,y2)=>{const v=x1===x2,t=6,d=`M${x1},${y1}L${x2},${y2}M${v?x1-t:x1},${v?y1:y1-t}L${v?x1+t:x1},${v?y1:y1+t}M${v?x2-t:x2},${v?y2:y2-t}L${v?x2+t:x2},${v?y2:y2+t}`;return `<path d="${d}" stroke="#fff" stroke-width="5" stroke-opacity=".85" fill="none"/><path d="${d}" stroke="#14213D" stroke-width="2.2" fill="none"/>`};
+  const lead=(x1,y1,x2,y2)=>`<path d="M${x1},${y1}L${x2},${y2}" stroke="#14213D" stroke-width="1" fill="none"/>`;
+  const S=30,[sl,sw,pl,pw]=M[1].map(v=>v*S),ys=-outline(sl,sw,'sepal').yw,yp=outline(pl,pw,'petal').yw;
+  $('.iris-parts',root).innerHTML=`<svg viewBox="-186 -152 400 356" role="img" aria-label="An iris flower with sepal length, sepal width, petal length and petal width marked">${flower(1,S,'i9')}
+    ${bar(0,0,0,sl)}${bar(-sw/2,ys,sw/2,ys)}${bar(0,0,0,-pl)}${bar(-pw/2,yp,pw/2,yp)}
+    ${lead(4,sl-26,58,sl-26)}<text x="62" y="${sl-21}">sepal length</text>
+    <text x="${-sw/2-9}" y="${ys+5}" text-anchor="end">sepal width</text>
+    ${lead(4,-pl+10,38,-pl+10)}<text x="42" y="${-pl+15}">petal length</text>
+    ${lead(-pw/2-2,yp-4,-26,-pl+16)}<text x="-22" y="${-pl+10}" text-anchor="end">petal width</text>
+    <text class="part" x="${.866*sl+8}" y="${-.5*sl+8}">sepal</text>
+    <text class="part" x="${.866*pl+8}" y="${.5*pl+10}">petal</text></svg>`;
+  $('.iris-row',root).innerHTML=[0,1,2].map(k=>`<div><svg viewBox="-100 -86 200 196" role="img" aria-label="Iris ${names[k]} drawn to scale">${flower(k,14,'i'+k)}<path d="M-92,100h28M-92,96v8M-64,96v8" stroke="#4E5A70" stroke-width="1.5" fill="none"/><text x="-58" y="104" style="font-size:11px;font-weight:500;fill:#4E5A70">2 cm</text></svg>
+    <b style="color:${cols[k]}"><i class="dot" style="background:${cols[k]}"></i> Iris ${names[k]}</b>sepal ${M[k][0].toFixed(1)} × ${M[k][1].toFixed(1)} cm<br>petal ${M[k][2].toFixed(1)} × ${M[k][3].toFixed(1)} cm</div>`).join('')})();
+
 /* ================= hero ================= */
 (()=>{const root=$('#w-hero'),pl=new Plot($('canvas',root),{xmin:2.7,xmax:7.2,ymin:.75,ymax:2.75}),out=$('.readout',root);
   const A=sp2(1,2,3),B=sp2(2,2,3),ea=stats(A),eb=stats(B),L=ldaLine(ea.mu,eb.mu,mix(ea.S,eb.S,.5),.5),Aj=jit(A,1),Bj=jit(B,2);let f=[4.6,1.7];
@@ -687,22 +799,26 @@ function bayes(root,usePrior){const A=sp1(1,2),B=sp1(2,2),MA=mean(A),MB=mean(B),
 bayes($('#w-bayes'),false);bayes($('#w-prior'),true);
 
 /* ================= 2. made-up: two spreads ================= */
-(()=>{const root=$('#w-q2'),st={},MA=4.3,MB=5.6,pl=new Plot($('canvas',root),{xmin:1.8,xmax:8.6,ymin:-.2,ymax:1.3}),out=$('.readout',root);
+(()=>{const root=$('#w-q2'),st={},MA=5,MB=5.3,pl=new Plot($('canvas',root),{xmin:1.6,xmax:8.8,ymin:-.2,ymax:1.3}),out=$('.readout',root);
   pl.draw=()=>{const{sa,sb}=st,A=1/(2*sa*sa)-1/(2*sb*sb),B=MB/(sb*sb)-MA/(sa*sa),C=MA*MA/(2*sa*sa)-MB*MB/(2*sb*sb)+Math.log(sa/sb);
-    const g=x=>A*x*x+B*x+C,top=Math.max(1/sa,1/sb)*.2*1.2;pl.ymax=top;pl.ymin=-top*.24;
-    pl.clear();const c=pl.ctx,n=340,y0=pl.Y(0)+22;
-    for(let i=0;i<n;i++){const x=pl.xmin+(i+.5)/n*(pl.xmax-pl.xmin);c.fillStyle=g(x)>0?COL.b:COL.a;c.fillRect(i/n*pl.w,y0,pl.w/n+1,10)}
-    pl.curve(t=>.5*npdf(t,MA,sa),COL.a,2.5,.14);pl.curve(t=>.5*npdf(t,MB,sb),COL.b,2.5,.16);pl.axis(1);
-    pl.text('A',MA,.5*npdf(MA,MA,sa)+top*.06,COL.a,'center');pl.text('B',MB,.5*npdf(MB,MB,sb)+top*.06,'#B97800','center');
-    let roots=[];if(Math.abs(A)<1e-6)roots=[-C/B];else{const D=B*B-4*A*C;if(D>=0)roots=[(-B-Math.sqrt(D))/(2*A),(-B+Math.sqrt(D))/(2*A)].sort((a,b)=>a-b)}
-    roots.forEach(r=>{if(r>pl.xmin&&r<pl.xmax){pl.vline(r,COL.ink,2);pl.text(f2(r),r+.06,top*.5,COL.ink)}});
-    const wide=A>0?'B':'A',tight=A>0?'A':'B';
-    out.innerHTML=Math.abs(A)<1e-6?`Equal spreads: the x² term is zero and there is one cut, at <b>${f2(roots[0])}</b>.`
-      :roots.length<2?`Class ${wide} wins everywhere.`
-      :`The x² coefficient is 1/(2 × ${f2(sa)}²) − 1/(2 × ${f2(sb)}²) = <b>${f2(A)}</b>, not zero. Two cuts, at <b>${f2(roots[0])}</b> and <b>${f2(roots[1])}</b>. Between them class ${tight} wins. Outside them, on both sides, the wider class ${wide} wins.`};
+    const g=x=>A*x*x+B*x+C,top=.5*npdf(MA,MA,sa)*1.22;pl.ymax=top;pl.ymin=-top*.3;
+    pl.clear();const c=pl.ctx,n=340,y0=pl.Y(0)+24,sh=20;
+    for(let i=0;i<n;i++){const x=pl.xmin+(i+.5)/n*(pl.xmax-pl.xmin);c.fillStyle=g(x)>0?COL.b:COL.a;c.fillRect(i/n*pl.w,y0,pl.w/n+1,sh)}
+    pl.curve(t=>.5*npdf(t,MB,sb),COL.b,2.5,.16);pl.curve(t=>.5*npdf(t,MA,sa),COL.a,2.5,.14);pl.axis(1);
+    pl.text('good bolts',MA+sa*.7+.1,.5*npdf(MA,MA,sa)*.93,COL.a);pl.text('faulty bolts',MB+sb*1.25,.5*npdf(MB+sb*1.25,MB,sb)+top*.07,'#B97800');
+    pl.text('diameter (mm)',pl.w-8,pl.Y(0)-12,COL.soft,'right',true);
+    const D=B*B-4*A*C,roots=D>=0?[(-B-Math.sqrt(D))/(2*A),(-B+Math.sqrt(D))/(2*A)].sort((a,b)=>a-b):[];
+    roots.forEach((r,i)=>{pl.seg([r,pl.iy(y0+sh)],[r,top*.62],COL.ink,2);pl.text('cut '+f2(r),r+(i?.07:-.07),top*.55,COL.ink,i?'left':'right')});
+    if(roots.length===2){c.font='600 12.5px system-ui';c.fillStyle='#fff';c.textBaseline='middle';c.textAlign='center';
+      [[pl.xmin,roots[0],'faulty: too thin'],[roots[0],roots[1],'good'],[roots[1],pl.xmax,'faulty: too thick']].forEach(([a,b,t])=>{const w=pl.X(b)-pl.X(a);if(c.measureText(t).width+8<w)c.fillText(t,pl.X((a+b)/2),y0+sh/2+.5);
+        else if(c.measureText(t.split(':')[0]).width+6<w)c.fillText(t.split(':')[0],pl.X((a+b)/2),y0+sh/2+.5)})}
+    out.innerHTML=roots.length<2?`With these spreads a bolt is called faulty at every diameter.`
+      :`Two cuts, at <b>${f2(roots[0])}</b> and <b>${f2(roots[1])}</b> mm. Between them the bolt is called <b class="ca">good</b>. Thinner than ${f2(roots[0])} or thicker than ${f2(roots[1])}, it is called <b class="cb">faulty</b>. The x² coefficient is 1/(2 × ${f2(sa)}²) − 1/(2 × ${f2(sb)}²) = <b>${f2(A)}</b>, not zero, which is what allows two cuts.`};
   bind(root,st,()=>pl.draw());pl.draw()})();
 
 /* ================= 3 and 7. projection figures ================= */
+const bestCutAt=(z0,z1)=>{const a=[...z0.map(v=>[v,0]),...z1.map(v=>[v,1])].sort((p,q)=>p[0]-q[0]),n0=z0.length,n1=z1.length;let l0=0,l1=0,r={ok:Math.max(n0,n1),cut:null,low:0};
+  for(let i=0;i+1<a.length;i++){a[i][1]?l1++:l0++;if(a[i+1][0]===a[i][0])continue;const c=(a[i][0]+a[i+1][0])/2,k0=l0+n1-l1,k1=l1+n0-l0;if(k0>r.ok)r={ok:k0,cut:c,low:0};if(k1>r.ok)r={ok:k1,cut:c,low:1}}return r};
 function projector(root,o){const cvs=$$('canvas',root),out=$('.readout',root),st={hide:false};
   const pl=new Plot(cvs[0],{...o.view,equal:true}),hi=new Plot(cvs[1],{xmin:-o.zr,xmax:o.zr,ymin:-5,ymax:30}),jc=cvs[2]&&new Plot(cvs[2],{xmin:-8,xmax:188,ymin:-.32,ymax:1.28});
   const P=o.P,D=o.show||P,E=P.map(stats),all=stats([...P[0],...P[1]]),c0=all.mu,sw=E[0].S.map((v,i)=>v+E[1].S[i]),d=sub(E[1].mu,E[0].mu),w=mv(inv(sw),d);
@@ -713,21 +829,35 @@ function projector(root,o){const cvs=$$('canvas',root),out=$('.readout',root),st
     pl.clear();pl.grid(o.grid);if(o.labels)pl.ticks(o.labels[0],o.labels[1],o.grid);
     pl.seg([c0[0]-20*u[0],c0[1]-20*u[1]],[c0[0]+20*u[0],c0[1]+20*u[1]],COL.ink,1.5);
     [0,1].forEach(i=>{pl.dots(D[i],col[i],3.4,.6);pl.dots(P[i].map(p=>{const z=pr(p);return[c0[0]+z*u[0],c0[1]+z*u[1]]}),col[i],2.6,.55)});
+    const z=P.map(q=>q.map(pr)),bc=bestCutAt(z[0],z[1]),showCut=!st.hide&&bc.cut!=null;
+    if(showCut){const q=[c0[0]+bc.cut*u[0],c0[1]+bc.cut*u[1]];const t=.035*(pl.xmax-pl.xmin);pl.seg([q[0]+t*u[1],q[1]-t*u[0]],[q[0]-t*u[1],q[1]+t*u[0]],'#fff',7);pl.seg([q[0]+t*u[1],q[1]-t*u[0]],[q[0]-t*u[1],q[1]+t*u[0]],COL.ink,3.5);
+      const k=pl.ctx;k.strokeStyle=COL.ink;k.lineWidth=1.8;[0,1].forEach(i=>z[i].forEach((v,j)=>{if((v<bc.cut)!==(i===bc.low)){k.beginPath();k.arc(pl.X(D[i][j][0]),pl.Y(D[i][j][1]),5.5,0,7);k.stroke()}}))}
+    const fish=o.mode==='fisher'&&!st.hide,mm=E.map(e=>pr(e.mu)),sd=E.map(e=>Math.sqrt(quad(e.S,u)));
+    if(fish)[0,1].forEach(i=>{const mu=E[i].mu,sh=[c0[0]+mm[i]*u[0],c0[1]+mm[i]*u[1]],k=pl.ctx;pl.seg(mu,sh,COL.ink,1.3,[3,3]);
+      k.beginPath();k.arc(pl.X(mu[0]),pl.Y(mu[1]),7.5,0,7);k.fillStyle='#fff';k.fill();k.strokeStyle=col[i];k.lineWidth=3.5;k.stroke();
+      k.beginPath();k.arc(pl.X(sh[0]),pl.Y(sh[1]),5.5,0,7);k.fillStyle=col[i];k.fill();k.strokeStyle='#fff';k.lineWidth=2;k.stroke();
+      pl.text(i?'centre':'centre',mu[0],mu[1]+(i?-1:1)*.06*(pl.xmax-pl.xmin),col[i],'center')});
     pl.knob(pl.handles[0].get(),COL.ink,'',true);
-    const z=P.map(q=>q.map(pr)),nb=34,bw=2*o.zr/nb,H=z.map(q=>{const h=new Array(nb).fill(0);q.forEach(v=>{const b=Math.floor((v+o.zr)/bw);if(b>=0&&b<nb)h[b]++});return h});
-    const mx=Math.max(...H[0],...H[1],8);hi.ymax=mx*1.4;hi.ymin=-mx*.12;hi.clear();const c=hi.ctx;
+    const nb=34,bw=2*o.zr/nb,H=z.map(q=>{const h=new Array(nb).fill(0);q.forEach(v=>{const b=Math.floor((v+o.zr)/bw);if(b>=0&&b<nb)h[b]++});return h});
+    const mx=Math.max(...H[0],...H[1],8,...(fish?[0,1].map(i=>P[i].length*bw*npdf(0,0,sd[i])):[]));hi.ymax=mx*(fish?1.62:1.4);hi.ymin=-mx*(fish?.34:.12);hi.clear();const c=hi.ctx;
     [0,1].forEach(i=>{c.fillStyle=col[i];c.globalAlpha=.6;H[i].forEach((v,b)=>{if(v)c.fillRect(hi.X(-o.zr+b*bw),hi.Y(v),hi.w/nb-1,hi.Y(0)-hi.Y(v))})});c.globalAlpha=1;
     hi.seg([-o.zr,0],[o.zr,0],COL.soft,1);hi.text('the shadows along the line',8,13,COL.soft,'left',true);
+    if(showCut){hi.seg([bc.cut,0],[bc.cut,mx*1.0],COL.ink,2,[7,5]);if(!fish)hi.text('best cut',bc.cut,mx*1.11,COL.ink,'center')}
+    if(fish){[0,1].forEach(i=>{const y=-mx*.17,L=mm[i]<mm[1-i],tk=mx*.05;hi.curve(t=>P[i].length*bw*npdf(t,mm[i],sd[i]),col[i],2.2);hi.seg([mm[i],0],[mm[i],mx*1.2],col[i],1.5,[3,3]);
+        hi.seg([mm[i]-sd[i],y],[mm[i]+sd[i],y],col[i],3);hi.seg([mm[i]-sd[i],y-tk],[mm[i]-sd[i],y+tk],col[i],3);hi.seg([mm[i]+sd[i],y-tk],[mm[i]+sd[i],y+tk],col[i],3);
+        hi.text('spread '+f2(sd[i]),mm[i]+(L?-1:1)*(sd[i]+.07),y,col[i],L?'right':'left')});
+      const tk=mx*.05;hi.seg([mm[0],mx*1.2],[mm[1],mx*1.2],COL.ink,2.5);hi.seg([mm[0],mx*1.2-tk],[mm[0],mx*1.2+tk],COL.ink,2.5);hi.seg([mm[1],mx*1.2-tk],[mm[1],mx*1.2+tk],COL.ink,2.5);
+      hi.text('gap '+f2(Math.abs(mm[1]-mm[0])),(mm[0]+mm[1])/2,mx*1.36,COL.ink,'center')}
     const cd=deg(mod(th));
     if(jc){jc.clear();if(o.mode==='pca')jc.curve(a=>V(a*Math.PI/180)/Vm,COL.mute,2.5);if(!st.hide)jc.curve(a=>J(a*Math.PI/180)/Jm,COL.hot,2.5);jc.axis(45,v=>v+'°');
       const marks=o.mode==='pca'?[['PCA',dir.pca,COL.soft]]:[['centres',dir.md,COL.soft]];if(!st.hide)marks.push([o.mode==='pca'?'LDA':'best',dir.fi,COL.hot]);
       marks.forEach(([n,a,cl],i)=>{jc.vline(deg(a),cl,1,[3,3]);jc.text(n,deg(a)+2,i?1.19:1.05,cl)});
       jc.vline(cd,COL.ink,2);jc.dots([[cd,st.hide?V(th)/Vm:J(th)/Jm]],COL.ink,5,1)}
-    const m0=pr(E[0].mu),m1=pr(E[1].mu),ok=bestCut(z[0],z[1]),v0=quad(E[0].S,u),v1=quad(E[1].S,u);
+    const m0=pr(E[0].mu),m1=pr(E[1].mu),ok=bc.ok,v0=quad(E[0].S,u),v1=quad(E[1].S,u);
     const note=o.mode==='plain'?(Math.abs(cd)<.3||Math.abs(cd-180)<.3?' This is sepal length on its own.':Math.abs(cd-90)<.3?' This is sepal width on its own.':''):'';
     out.innerHTML=st.hide?`Direction ${cd.toFixed(0)}°. Spread (variance) of all the shadows: <b>${f2(V(th))}</b>. The largest possible is ${f2(Vm)}, at ${deg(dir.pca).toFixed(0)}°.`
-      :o.mode==='plain'?`Direction ${cd.toFixed(0)}°.${note} The best cut on these shadows gets <b>${ok} of ${N}</b> flowers right.`
-      :`Direction ${cd.toFixed(0)}°. Gap between the shadow means: ${f2(Math.abs(m1-m0))}. Variances of the two piles: ${f3(v0)} and ${f3(v1)}.<br>J = ${f2(Math.abs(m1-m0))}² / (${f3(v0)} + ${f3(v1)}) = <b>${f2(J(th))}</b> (the highest possible is ${f2(Jm)}). Best cut: <b>${ok} of ${N}</b> right.`;
+      :o.mode==='plain'?`Direction ${cd.toFixed(0)}°.${note} The best cut on these shadows gets <b>${ok} of ${N}</b> flowers right${N-ok?`, so <b>${N-ok}</b> are ringed as mistakes`:''}.`
+      :`Direction ${cd.toFixed(0)}°. Gap between the shadow means: ${f2(Math.abs(m1-m0))}. Spreads of the two piles: ${f2(Math.sqrt(v0))} and ${f2(Math.sqrt(v1))}, so their variances (spread²) are ${f3(v0)} and ${f3(v1)}.<br>J = ${f2(Math.abs(m1-m0))}² / (${f3(v0)} + ${f3(v1)}) = <b>${f2(J(th))}</b> (the highest possible is ${f2(Jm)}). Best cut: <b>${ok} of ${N}</b> right.`;
     if(document.activeElement!==slider)slider.value=cd;sOut.textContent=cd.toFixed(0)+'°'};
   pl.draw=hi.draw=draw;if(jc)jc.draw=draw;
   pl.addHandle(()=>[c0[0]+o.R*Math.cos(th),c0[1]+o.R*Math.sin(th)],p=>{th=Math.atan2(p[1]-c0[1],p[0]-c0[0])});
