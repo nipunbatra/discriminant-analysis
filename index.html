@@ -617,6 +617,17 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <tr><td>Boundary</td><td>straight</td><td>curved</td></tr>
     <tr><td>Has to estimate</td><td>one covariance</td><td>one covariance for every class, so it needs more data</td></tr>
   </table></div>
+  <h3>Which one, when?</h3>
+  <p>All three methods on this page answer the same question. They differ in what they assume, and that decides when each one is the better choice.</p>
+  <div class="scroll"><table class="big">
+    <tr><th></th><th>LDA</th><th>QDA</th><th>Logistic regression</th></tr>
+    <tr><td>Assumes</td><td>bell-shaped classes, one shared spread</td><td>bell-shaped classes, each with its own spread</td><td>only that the score is a straight line</td></tr>
+    <tr><td>Boundary</td><td>straight</td><td>curved</td><td>straight</td></tr>
+    <tr><td>Fitted by</td><td>averages and one matrix inverse</td><td>averages and one matrix inverse per class</td><td>a search for the best weights</td></tr>
+    <tr><td>Prefer it when</td><td>data is scarce and the classes look like bells of similar shape; also when there are many classes</td><td>data is plentiful and the classes have clearly different shapes</td><td>data is plentiful and the classes are not bell-shaped: odd shapes, outliers, yes/no measurements</td></tr>
+    <tr><td>Watch out for</td><td>points far from the boundary still pull it (section 5)</td><td>a whole covariance to estimate for every class, which needs many points per class</td><td>no formula for the weights, and if the classes separate perfectly the weights grow without limit</td></tr>
+  </table></div>
+  <p>A reasonable habit: try LDA first when you have few points per class, and compare it with logistic regression on held-out data once you have more. Reach for QDA only when the classes visibly differ in shape and each class has plenty of points.</p>
   <p class="sofar"><b>So far.</b> LDA and QDA are the same Bayes’ rule. They differ by one assumption. Share the spread and the squared terms cancel, which gives a straight boundary. Keep separate spreads and they stay, which gives a curve.</p>
 </section>
 
