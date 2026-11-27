@@ -186,6 +186,7 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   </div>
   <p>The reasoning gives 4.91 cm. Go back to the first figure and set the cut to 4.90: 7 mistakes, the best possible. That is LDA with one measurement.</p>
   <p>Why <b>linear</b>? Look at step 3 again. With the flower numbers it reads \(5.02\,x-24.62\gt0\): a number times \(x\), plus a number. An expression with \(x\) only to the first power is called linear, and its graph is a straight line. A straight line crosses zero once, so there is exactly one cut. That is the L in LDA.</p>
+  <p>Try it on one flower. A petal 4.8 cm long scores \(5.02\times4.8-24.62\approx-0.5\). The score is negative, so the flower is called versicolor, which agrees with the picture: 4.8 is just left of the cut at 4.91. Section 5 turns this score into a probability.</p>
 
   <h3>How far apart are the two species?</h3>
   <p>One number says how well any cut can work: the gap between the centres, counted in spreads.</p>
@@ -240,6 +241,18 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   <p>First, a name for the direction. Call it \(w\). It is a pair of numbers, one weight for each measurement, and a flower’s shadow is the weighted sum</p>
   $$z \;=\; w_1\times\text{sepal length}\;+\;w_2\times\text{sepal width}.$$
   <p>For a line at angle \(\theta\), \(w=(\cos\theta,\ \sin\theta)\). At 0° that is \(w=(1,0)\), so the shadow is the sepal length alone. At 90° it is \(w=(0,1)\), the sepal width alone. Turning the line in the figure above was choosing \(w\).</p>
+  <div class="derive">
+    <h4>Worked example: one flower, three directions</h4>
+    <p>Take the first setosa in the data. Its sepal is 5.1 cm long and 3.5 cm wide, so \(x=(5.1,\ 3.5)\). Its shadow is \(z=w_1\times5.1+w_2\times3.5\). The flower does not change. Only \(w\) does.</p>
+    <div class="scroll"><table class="big">
+      <tr><th>Direction</th><th>\(w=(\cos\theta,\ \sin\theta)\)</th><th>Shadow \(z=w_1x_1+w_2x_2\)</th></tr>
+      <tr><td>0°</td><td>(1, 0)</td><td>\(1\times5.1+0\times3.5=5.1\), the sepal length</td></tr>
+      <tr><td>60°</td><td>(0.50, 0.87)</td><td>\(0.50\times5.1+0.87\times3.5\approx5.6\)</td></tr>
+      <tr><td>90°</td><td>(0, 1)</td><td>\(0\times5.1+1\times3.5=3.5\), the sepal width</td></tr>
+      <tr><td>129°</td><td>(−0.63, 0.78)</td><td>\(-0.63\times5.1+0.78\times3.5\approx-0.5\)</td></tr>
+    </table></div>
+    <p>Do the same sum for all 100 flowers and you have the pile of shadows for that direction. Every direction gives a different pile. The question for the rest of this section is which \(w\) gives the two species the piles that are easiest to tell apart.</p>
+  </div>
   <p>Once the flowers are shadows on a line, we are back in section 1: two piles of numbers, each with its own centre, and one shared spread. Fisher’s score for a direction is the separation from section 1, squared:</p>
   $$J(w)=\Big(\frac{\text{gap between the two shadow centres}}{\text{shared spread of the shadows}}\Big)^{2}=\frac{(\text{gap})^2}{\text{shared variance}}$$
   <p>Both parts matter. A big gap is no use if the piles are wide enough to overlap anyway.</p>
@@ -261,6 +274,16 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     <figcaption>Left: the large rings are the two centres, and the dotted lines drop them onto the line. Top right: the two piles of shadows, the gap (black bar) and the shared spread (coloured bars, the same length for both piles). Bottom right: the score J for every direction, scaled so the best is 1. The black marker is the current direction.</figcaption>
   </figure>
   <p>Sepal length alone separates the species by 2.1 spreads, and sepal width alone by 1.9. The best direction (129°) reaches 4.5. The obvious guess, the line joining the two centres (145°), has a slightly bigger gap but a wider spread, and reaches 4.0.</p>
+  <p>Here are the ingredients for four directions. In each one the shadows of a species form a pile, the pile has its own variance, and the two variances are averaged and square-rooted into the shared spread, exactly as in section 1.</p>
+  <div class="scroll"><table class="big">
+    <tr><th>Direction</th><th>Gap</th><th>Variance, <span class="cc">setosa</span></th><th>Variance, <span class="ca">versicolor</span></th><th>Average</th><th>Shared spread</th><th>Separation</th></tr>
+    <tr><td>Sepal length only (0°)</td><td>0.93</td><td>0.12</td><td>0.26</td><td>0.19</td><td>0.44</td><td>2.1</td></tr>
+    <tr><td>Sepal width only (90°)</td><td>0.66</td><td>0.14</td><td>0.10</td><td>0.12</td><td>0.34</td><td>1.9</td></tr>
+    <tr><td>Line joining the centres (145°)</td><td><b>1.14</b></td><td>0.04</td><td>0.13</td><td>0.08</td><td>0.29</td><td>4.0</td></tr>
+    <tr><td>Best direction (129°)</td><td>1.10</td><td>0.04</td><td><b>0.08</b></td><td>0.06</td><td><b>0.24</b></td><td><b>4.5</b></td></tr>
+  </table></div>
+  <p>Read the last two rows together. The line joining the centres has the biggest gap there is, 1.14. But the versicolor cloud is stretched along that line, so its pile is wide: variance 0.13. Tilt the line to 129° and the gap barely changes, 1.14 to 1.10, about 4 per cent less. The versicolor variance falls from 0.13 to 0.08, and the shared spread falls from 0.29 to 0.24, about 15 per cent less. A slightly smaller gap divided by a much smaller spread is a bigger separation.</p>
+  <p>We found 129° by turning the line and looking. That is brute force, and it only works here because a direction in a plane is one angle. With four measurements a direction needs three angles, and with a hundred measurements there are far too many to try. So the next step is a formula for the best \(w\), and then the same formula worked through with numbers.</p>
   <div class="derive">
     <h4>Derivation: the best direction</h4>
     <ol>
@@ -329,6 +352,12 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
 <section id="s-lda">
   <h2><span class="n">3</span>The same answer from bell curves</h2>
   <p>Section 1 used bell curves and Bayes’ rule. Section 2 used shadows and no probabilities at all. Now do section 1 again with two measurements, and see that it lands on the direction section 2 found.</p>
+  <div class="rule">
+    <p class="rule-name">Two routes to the same line</p>
+    <p><b>Route 1, Fisher (section 2).</b> Project the flowers onto a direction \(w\). Choose the \(w\) whose two piles are the most spreads apart. No probabilities are involved.</p>
+    <p><b>Route 2, bell curves (this section).</b> Give each species a bell-shaped hill and ask which species is more probable for a new flower. No projection is mentioned.</p>
+    <p>The claim is that route 2 ends in the same \(w\), and that its rule turns out to be a projection after all.</p>
+  </div>
   <p>A bell curve in two dimensions is a hill. Its centre is the class centre \(\mu\). Its footprint is an ellipse, and the shape of that ellipse is the covariance matrix. The one rule applies unchanged: each class has its own centre, and both classes share one covariance \(\Sigma\), the average of their own two.</p>
   <p class="try"><b>Try it.</b> Step through the figure. At step 3, compare the thin dashed ellipses (each class’s own shape) with the solid ones (the shared shape). At the last step, drag the new flower.</p>
   <figure class="fig" id="w-steps">
@@ -356,9 +385,47 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
     </ol>
   </div>
   <p>This \(w\) is exactly Fisher’s \(\Sigma^{-1}(\mu_B-\mu_A)\) from section 2. LDA can be read as a projection or as a probability model, and both give the same line. The probability model adds two things: where along that direction to cut (\(b\)), and a probability for every flower.</p>
+  <div class="derive">
+    <h4>Why the two routes agree: read the boundary in one dimension first</h4>
+    <ol>
+      <li><b>The boundary from Bayes’ rule.</b> With equal priors the two classes tie where \(\delta_B(x)=\delta_A(x)\). Written out from step 3, that is
+        $$x^\top\Sigma^{-1}(\mu_B-\mu_A)=\tfrac12\big(\mu_B^\top\Sigma^{-1}\mu_B-\mu_A^\top\Sigma^{-1}\mu_A\big)$$
+        This is how most textbooks state LDA. It looks heavy, so read it with one measurement first.</li>
+      <li><b>One measurement.</b> Now \(x\), \(\mu_A\) and \(\mu_B\) are plain numbers, and \(\Sigma\) is the shared variance \(\sigma^2\), so \(\Sigma^{-1}\) is \(1/\sigma^2\).
+        $$x\,\frac{\mu_B-\mu_A}{\sigma^2}=\frac{\mu_B^2-\mu_A^2}{2\sigma^2}$$</li>
+      <li><b>Solve it.</b> Multiply both sides by \(\sigma^2\) and use \(\mu_B^2-\mu_A^2=(\mu_B-\mu_A)(\mu_B+\mu_A)\).
+        $$x=\frac{\mu_A+\mu_B}{2}$$
+        Halfway between the centres. This is the cut of section 1, 4.91 cm for the petal lengths.</li>
+      <li><b>Back to several measurements: the left side.</b> Since \(w=\Sigma^{-1}(\mu_B-\mu_A)\), the left side is
+        $$x^\top\Sigma^{-1}(\mu_B-\mu_A)=w^\top x$$
+        the shadow of the flower on Fisher’s direction.</li>
+      <li><b>The right side.</b> The same difference-of-squares step works with matrices, because \(\Sigma^{-1}\) is symmetric.
+        $$\tfrac12\big(\mu_B^\top\Sigma^{-1}\mu_B-\mu_A^\top\Sigma^{-1}\mu_A\big)=\tfrac12(\mu_A+\mu_B)^\top\Sigma^{-1}(\mu_B-\mu_A)=w^\top\,\frac{\mu_A+\mu_B}{2}$$
+        the shadow of the point halfway between the two centres.</li>
+      <li><b>Put the two sides together.</b>
+        $$\underbrace{w^\top x}_{\text{shadow of the flower}}=\underbrace{w^\top\,\tfrac12(\mu_A+\mu_B)}_{\text{shadow of the midpoint}}$$
+        Bayes’ rule says: project the flower onto \(w\) and cut at the shadow of the midpoint. That is route 1. And with one measurement there is nothing to project, so it reduces to “cut halfway between the centres”.</li>
+    </ol>
+  </div>
+  <p><b>Route 2 is a projection too.</b> Look at the rule \(w^\top x+b\gt0\). The term \(w^\top x\) is the shadow of the flower on the direction \(w\), the same weighted sum as in section 2. So the rule says: project the flower onto \(w\), and compare that one number with a threshold. With \(w\) shrunk to length 1, \(w=(0.63,\ -0.78)\), the rule reads</p>
+  $$0.63\times\text{length}-0.78\times\text{width}\;\gt\;1.03$$
+  <p>and 1.03 is the shadow of the point halfway between the two centres. The flowers whose shadow is exactly 1.03 form a straight line at right angles to \(w\). That line is the boundary in the figure. It puts 99 of the 100 flowers on the correct side. (Section 2 reached all 100 because it searched for the best cut on the shadows. Here the cut is fixed halfway between the centres, and one setosa falls just across it.)</p>
+
+  <h3>More measurements</h3>
+  <p>Nothing above was special to two measurements. With three, each flower is a point in space and \(w\) has three weights. With four, \(w\) has four, and we can no longer draw the cloud. The formula \(w=\Sigma^{-1}(\mu_B-\mu_A)\) is unchanged, and \(w^\top x\) is still one number per flower. LDA always takes two classes from however many measurements down to one number.</p>
+  <p>Go back to the harder pair from section 1, <span class="ca">versicolor</span> against <span class="cb">virginica</span>, and add measurements one at a time. Each row is LDA with the cut halfway between the two centres.</p>
+  <div class="scroll"><table class="big">
+    <tr><th>Measurements used</th><th>\(w\)</th><th>Mistakes out of 100</th><th>Separation</th></tr>
+    <tr><td>Petal length</td><td>(5.02)</td><td>8</td><td>2.5</td></tr>
+    <tr><td>Petal length, petal width</td><td>(2.82, 9.47)</td><td>6</td><td>3.2</td></tr>
+    <tr><td>Sepal length, petal length, petal width</td><td>(−4.70, 7.27, 9.04)</td><td>3</td><td>3.6</td></tr>
+    <tr><td>All four (sepal length, sepal width, petal length, petal width)</td><td>(−3.63, −5.69, 7.11, 12.64)</td><td>3</td><td>3.8</td></tr>
+  </table></div>
+  <p>The first row is section 1: with one measurement \(w\) is a single number, the 5.02 in front of \(x\). (The cut at 4.91 makes 8 mistakes. The best possible cut, found by trial, makes 7.) Each added measurement gives \(w\) one more weight and pulls the two piles further apart.</p>
 
   <h3>All three species</h3>
   <p>More than two classes changes nothing. Compute \(\delta_k(x)\) for every class and pick the largest. Here are all 150 flowers, with petal length and width. Each species has its own centre, and all three share one covariance, the average of the three.</p>
+  <p>In Fisher’s view, two classes need one direction, and three classes need two. In general \(K\) classes need at most \(K-1\) directions, and never more than the number of measurements. Each direction is another \(w\), so each flower becomes \(K-1\) numbers. With all four measurements and all three species, that rule classifies 147 of the 150 flowers correctly.</p>
   <figure class="fig" id="w-three">
     <canvas data-aspect="0.56" aria-label="All three iris species with LDA regions"></canvas>
     <div class="legend"><span><i class="dot" style="background:var(--c)"></i>setosa</span><span><i class="dot" style="background:var(--a)"></i>versicolor</span><span><i class="dot" style="background:var(--b)"></i>virginica</span></div>
@@ -514,20 +581,60 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
 </section>
 
 <!-- ───────── 7 ───────── -->
+<section id="s-qda">
+  <h2><span class="n">7</span>Dropping the assumption: QDA</h2>
+  <p>Everything so far rests on one rule: all classes share one spread. Now drop it. Let each class keep its own. Bayes’ rule does not change. We still compare prior × likelihood, and we still take logs.</p>
+  <p>Go back to petal length, <span class="ca">versicolor</span> against <span class="cb">virginica</span>. Their own variances are 0.22 and 0.30.</p>
+  <div class="derive">
+    <h4>Derivation: the same steps as section 1, with two spreads</h4>
+    <ol>
+      <li>Say virginica (B) when its prior × likelihood is larger. Each bell curve now has its own \(\sigma\), so the factor in front no longer drops out. It leaves a log term.
+        $$\log\pi_B-\log\sigma_B-\frac{(x-\mu_B)^2}{2\sigma_B^2}\;\gt\;\log\pi_A-\log\sigma_A-\frac{(x-\mu_A)^2}{2\sigma_A^2}$$</li>
+      <li>Expand the squares and collect the \(x^2\) terms. In section 1 they were equal and cancelled. Now they are divided by different variances.
+        $$\Big(\frac{1}{2\sigma_A^2}-\frac{1}{2\sigma_B^2}\Big)x^2+\Big(\frac{\mu_B}{\sigma_B^2}-\frac{\mu_A}{\sigma_A^2}\Big)x-\frac{\mu_B^2}{2\sigma_B^2}+\frac{\mu_A^2}{2\sigma_A^2}-\log\frac{\sigma_B}{\sigma_A}+\log\frac{\pi_B}{\pi_A}\;\gt\;0$$
+        Set \(\sigma_A=\sigma_B\) and the first bracket is zero, the log of the spreads is zero, and this is step 3 of section 1 again.</li>
+      <li>With the flower numbers and equal priors:
+        $$0.64\,x^2-1.09\,x-9.86\;\gt\;0$$
+        The score has an \(x^2\) in it. It is a quadratic, and its graph is a parabola. That is the Q in <b>quadratic discriminant analysis</b>.</li>
+      <li>A parabola can cross zero twice. Here it crosses at 4.89 cm and at −3.2 cm. No petal has a negative length, so only the first one matters.</li>
+    </ol>
+  </div>
+  <figure class="fig">
+    <img src="qda-1d.jpg" width="1920" height="1080" alt="Two bell curves with their own spreads; LDA's score as a straight line and QDA's score as a parabola, crossing zero at 4.91 and 4.89 cm" loading="lazy" style="width:100%;height:auto;border-radius:8px">
+    <figcaption>Left: each bell curve with its own spread (the grey outlines are the shared-spread curves). Right: LDA’s score is a line, QDA’s is a parabola. They cross zero at 4.91 and 4.89 cm.</figcaption>
+  </figure>
+  <p>On these flowers the cut hardly moves, from 4.91 to 4.89 cm, because the two variances were nearly equal to begin with. QDA makes 7 mistakes here and LDA makes 8.</p>
+  <p>With two measurements each class keeps its own covariance matrix, \(S_A\) and \(S_B\), and they are not averaged. The term \(-\tfrac12x^\top\Sigma^{-1}x\) that dropped out in section 3 is now different for each class, so it stays, and the boundary is a curve.</p>
+  $$\delta_k(x)=-\tfrac12\log|S_k|-\tfrac12(x-\mu_k)^\top S_k^{-1}(x-\mu_k)+\log\pi_k$$
+  <figure class="fig">
+    <img src="qda-2d.jpg" width="1920" height="1080" alt="Setosa and versicolor sepal measurements with each class's own ellipse, LDA's straight boundary and QDA's curved boundary" loading="lazy" style="width:100%;height:auto;border-radius:8px">
+    <figcaption>Setosa and versicolor again, each with its own ellipse. The straight line is LDA’s boundary and the curve is QDA’s. Both put 99 of the 100 flowers on the correct side.</figcaption>
+  </figure>
+  <div class="scroll"><table class="big">
+    <tr><th></th><th>LDA</th><th>QDA</th></tr>
+    <tr><td>Assumes</td><td>own centre per class, one shared covariance</td><td>own centre and own covariance per class</td></tr>
+    <tr><td>The \(x^2\) terms</td><td>cancel</td><td>stay</td></tr>
+    <tr><td>Boundary</td><td>straight</td><td>curved</td></tr>
+    <tr><td>Has to estimate</td><td>one covariance</td><td>one covariance for every class, so it needs more data</td></tr>
+  </table></div>
+  <p class="sofar"><b>So far.</b> LDA and QDA are the same Bayes’ rule. They differ by one assumption. Share the spread and the squared terms cancel, which gives a straight boundary. Keep separate spreads and they stay, which gives a curve.</p>
+</section>
+
+<!-- ───────── 8 ───────── -->
 <section id="s-sum">
-  <h2><span class="n">7</span>Summary</h2>
+  <h2><span class="n">8</span>Summary</h2>
   <p>LDA in one sentence: give every class its own centre and all classes one shared spread, then ask which class makes the new point most probable.</p>
   <ul>
     <li><b>One measurement:</b> the rule is a single cut, halfway between the centres, shifted by the priors.</li>
     <li><b>Several measurements:</b> the rule is a straight boundary with direction \(\Sigma^{-1}(\mu_B-\mu_A)\).</li>
     <li><b>Fisher’s view:</b> that direction is the one where the classes are the most spreads apart.</li>
+    <li><b>A projection either way:</b> the rule \(w^\top x+b\gt0\) projects the point onto \(w\) and compares one number with a threshold.</li>
+    <li><b>More measurements, more classes:</b> the formula does not change. Two classes need one direction, and \(K\) classes need at most \(K-1\).</li>
     <li><b>PCA</b> also projects, but ignores the labels and maximises total spread.</li>
+    <li><b>QDA</b> drops the shared spread. The \(x^2\) terms no longer cancel and the boundary curves.</li>
     <li><b>Logistic regression</b> has LDA’s form, a sigmoid of a straight-line score, and finds the weights by search instead of by describing the classes.</li>
     <li><b>A Bayesian treatment</b> also admits doubt about the centres and the spread, which makes the model less sure of itself when data is scarce.</li>
   </ul>
-  <h3>What this page left out</h3>
-  <p>Everything here rests on the shared spread. Drop that rule, let each class keep its own spread, and the \(x^2\) terms no longer cancel. The boundary becomes a curve. That method is <b>quadratic discriminant analysis</b> (QDA). It fits classes of different shapes better, and it needs more data, because it has a separate covariance to estimate for every class.</p>
-
   <h3>Check yourself</h3>
   <details class="q"><summary>What are the two moves that make the shared spread?</summary><p>Measure each class’s own spread (its variance, or its covariance matrix with several measurements). Then average them. Every figure on this page uses the result.</p></details>
   <details class="q"><summary>The share of virginica rises from 50% to 90%. What happens to the LDA cut?</summary><p>It moves toward versicolor, so more flowers are called virginica. Only \(b\) contains the prior; the direction \(w\) does not change. Try it in the last figure of section 1.</p></details>
