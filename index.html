@@ -102,6 +102,8 @@ nav.toc a{display:block;padding:5px 8px;color:var(--soft);text-decoration:none;b
 nav.toc a.on{color:var(--ink);border-left-color:var(--hot);font-weight:600}
 @media(min-width:1330px){nav.toc{display:block}}
 footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
+.video{position:relative;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:#0B1220}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -119,6 +121,12 @@ footer{margin-top:90px;color:var(--soft);font:14px var(--sans);max-width:44em}
   </figure>
   <p>That line is <b>linear discriminant analysis</b> (LDA). This page builds it slowly, first with one measurement and then with two. After that it shows how LDA relates to two methods you may already know, PCA and logistic regression, and ends with a short Bayesian note.</p>
   <p>The data is the iris set that Ronald Fisher used in 1936 when he invented the method: 50 flowers each of three species, with four measurements per flower.</p>
+  <h3>Watch it as a film</h3>
+  <p>The same story as a 15-minute narrated film. It follows this page section by section, so you can watch first and then try the figures, or the other way round.</p>
+  <figure class="fig" id="w-film">
+    <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/Gtu63X8lNVQ" title="Linear Discriminant Analysis (LDA) from the ground up" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+    <figcaption>English captions are available. The narration is a synthetic voice and the music is AI-generated. <a href="https://youtu.be/Gtu63X8lNVQ">Open on YouTube</a></figcaption>
+  </figure>
   <h3>The flowers and what was measured</h3>
   <p>An iris has three large outer parts called <b>sepals</b> and three smaller inner parts called <b>petals</b>. The botanist Edgar Anderson measured the length and the width of one sepal and one petal on every flower. Those are the four numbers.</p>
   <figure class="fig" id="w-iris">
